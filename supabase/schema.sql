@@ -521,16 +521,16 @@ alter publication supabase_realtime add table public.offers, public.requests;
 insert into public.trades (id, label, icon, sort_order, for_artisans) values
   ('plomberie',      'Plomberie',                  'wrench',          1,  true),
   ('electricite',    'Électricité',                'zap',             2,  true),
-  ('peinture',       'Peinture',                   'paint-roller',    3,  true),
+  ('peinture',       'Peinture',                   'paintbrush',      3,  true),
   ('maconnerie',     'Maçonnerie',                 'brick-wall',      4,  true),
   ('carrelage',      'Carrelage',                  'grid-3x3',        5,  true),
   ('menuiserie',     'Menuiserie',                 'hammer',          6,  true),
-  ('climatisation',  'Climatisation',              'air-vent',        7,  true),
-  ('menage',         'Ménage',                     'spray-can',       8,  true),
+  ('climatisation',  'Climatisation',              'snowflake',       7,  true),
+  ('menage',         'Ménage',                     'sparkles',        8,  true),
   ('jardinage',      'Jardinage',                  'sprout',          9,  true),
   ('serrurerie',     'Serrurerie',                 'key-round',       10, true),
-  ('electromenager', 'Électroménager',             'washing-machine', 11, true),
+  ('electromenager', 'Électroménager',             'refrigerator',    11, true),
   ('demenagement',   'Déménagement et manutention','truck',           12, true),
-  ('autre',          'Autre',                      'ellipsis',        99, false);
+  ('autre',          'Autre',                      'circle-help',     99, false);
 
 commit;
