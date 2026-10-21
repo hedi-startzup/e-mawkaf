@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Jetons visuels de Mawkaf : n'utiliser que ces couleurs dans les composants
+   (bg-brand, text-ink, border-line...). Voir « Règles visuelles » dans CLAUDE.md.
+   brand : boutons principaux et titres. accent : mises en avant (pas pour du petit texte
+   sur fond blanc, contraste trop faible). ok / danger : succès et erreurs. */
+@theme {
+  /* Palette du logo : bleu Majorelle, terracotta, sable */
+  --color-brand: #1f3fa8;
+  --color-brand-dark: #172f7e;
+  --color-brand-light: #e6ebf8;
+  --color-accent: #d9652b;
+  --color-sand: #f2e3c6;
+
+  --color-ok: #15803d;
+  --color-danger: #b91c1c;
+  --color-ink: #1c1917;
+  --color-muted: #57534e;
+  --color-surface: #fafaf9;
+  --color-line: #e7e5e4;
+
+  --radius-card: 1rem;
+}
+
+body {
+  @apply bg-surface text-ink antialiased;
+}
