@@ -50,9 +50,10 @@ create table public.profiles (
   available_today boolean not null default true,
   credit_balance  integer not null default 0,      -- DH, peut être négatif (simulation US15)
   created_at      timestamptz not null default now(),
-  -- RG03 : un artisan a 1 à 3 métiers ; un client n'en a aucun
+  -- RG03 : un artisan a au plus 3 métiers (0 tant que son profil n'est pas complété, US04) ;
+  -- un client n'en a aucun
   constraint profiles_trades_selon_role check (
-       (role = 'artisan' and cardinality(trades) between 1 and 3)
+       (role = 'artisan' and cardinality(trades) <= 3)
     or (role = 'client'  and cardinality(trades) = 0)
   )
 );
