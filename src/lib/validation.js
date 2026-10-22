@@ -90,3 +90,22 @@ export function erreurPrixFacultatif(prix) {
   }
   return null
 }
+
+// --- Offres (US08) ---
+
+export const MESSAGE_OFFRE_MAX = 140
+
+// RG04 : prix d'une offre obligatoire, entier entre 50 et 5 000 DH
+export function erreurPrixOffre(prix) {
+  const valeur = String(prix).trim()
+  if (!valeur) return `Prix : indiquez votre prix en DH, entre ${PRIX_MIN} et ${PRIX_MAX}.`
+  if (!/^\d+$/.test(valeur) || Number(valeur) < PRIX_MIN || Number(valeur) > PRIX_MAX) {
+    return `Prix : un nombre entier entre ${PRIX_MIN} et ${PRIX_MAX} DH, sans centimes. Exemple : 250`
+  }
+  return null
+}
+
+export function erreurMessageOffre(message) {
+  if (message.trim().length > MESSAGE_OFFRE_MAX) return `Message : ${MESSAGE_OFFRE_MAX} caractères au maximum.`
+  return null
+}

@@ -1,17 +1,10 @@
 import { createElement, useEffect, useState } from 'react'
-import { CalendarDays, MessageSquareText, UserRound } from 'lucide-react'
+import { Link } from 'react-router'
+import { CalendarDays, ChevronRight, MessageSquareText, UserRound } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { libelleJour } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { Epingle, Etoile } from '../components/Marque'
-
-// Date du jour à Casablanca (AAAA-MM-JJ), comme private.today_casablanca() côté base.
-function aujourdhuiCasablanca() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Casablanca' }).format(new Date())
-}
-
-function libelleJour(dateService) {
-  return dateService === aujourdhuiCasablanca() ? "Aujourd'hui" : 'Demain'
-}
 
 // Fil de l'artisan.
 // US04 : sans métier, un message l'invite à compléter son profil.
@@ -94,7 +87,9 @@ export default function FilArtisan({ profil, allerAuProfil }) {
         <ul className="flex flex-col gap-3">
           {demandes.map((demande) => (
             <li key={demande.id}>
-              <CarteDemande demande={demande} />
+              <Link to={`/artisan/demandes/${demande.id}`} className="block rounded-card">
+                <CarteDemande demande={demande} />
+              </Link>
             </li>
           ))}
         </ul>
@@ -181,6 +176,7 @@ function CarteDemande({ demande }) {
           <MessageSquareText className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
           {n === 0 ? 'Aucune offre' : `${n} offre${n > 1 ? 's' : ''}`}
         </span>
+        <ChevronRight className="ml-auto h-6 w-6 text-brand" strokeWidth={2.5} aria-hidden="true" />
       </div>
     </article>
   )
