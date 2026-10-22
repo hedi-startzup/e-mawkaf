@@ -3,25 +3,73 @@
 /* Jetons visuels de Mawkaf : n'utiliser que ces couleurs dans les composants
    (bg-brand, text-ink, border-line...). Voir « Règles visuelles » dans CLAUDE.md.
    brand : boutons principaux et titres. accent : mises en avant (pas pour du petit texte
-   sur fond blanc, contraste trop faible). ok / danger : succès et erreurs. */
+   sur fond blanc, contraste trop faible). ok / danger : succès et erreurs.
+   sand / sand-deep : en-tête et motifs décoratifs (étoile marocaine). */
 @theme {
+  /* Polices (Google Fonts, chargées dans index.html) : titres et texte très lisible */
+  --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+
   /* Palette du logo : bleu Majorelle, terracotta, sable */
   --color-brand: #1f3fa8;
   --color-brand-dark: #172f7e;
   --color-brand-light: #e6ebf8;
   --color-accent: #d9652b;
   --color-sand: #f2e3c6;
+  --color-sand-deep: #e6cf9f;
 
   --color-ok: #15803d;
+  --color-ok-light: #e3f6e9;
   --color-danger: #b91c1c;
   --color-ink: #1c1917;
   --color-muted: #57534e;
   --color-surface: #fafaf9;
   --color-line: #e7e5e4;
+  --color-gray-light: #f2f1f0;
 
   --radius-card: 1rem;
+
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.06);
+  --shadow-press: 0 6px 18px -8px rgb(31 63 168 / 0.55);
+  --shadow-float: 0 -6px 24px -12px rgb(23 47 126 / 0.35);
+}
+
+/* Champ de saisie standard (texte, liste déroulante) */
+@utility champ {
+  height: 3rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 2px solid var(--color-line);
+  background-color: white;
+  padding-inline: 0.875rem;
+  font-size: 1.125rem;
+  color: var(--color-ink);
+  &:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px var(--color-brand-light);
+  }
+  &[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+  &::placeholder {
+    color: var(--color-muted);
+    opacity: 0.7;
+  }
 }
 
 body {
-  @apply bg-surface text-ink antialiased;
+  @apply bg-surface text-ink antialiased font-sans;
+  line-height: 1.45;
+}
+
+h1,
+h2,
+h3 {
+  @apply font-display font-bold text-brand;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
 }
