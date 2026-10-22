@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { CalendarDays, Check, ChevronRight, Inbox, Plus, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, ClipboardList, Handshake, Inbox, Plus, X } from 'lucide-react'
 import { Epingle, Etoile } from '../components/Marque'
 import { libelleJour } from '../lib/dates'
 import { STATUTS_DEMANDE, annulable, annulerDemande, chargerMesDemandes } from '../lib/demandes'
@@ -116,6 +116,19 @@ function CarteDemande({ demande, surAnnulee }) {
   )
 }
 
+// Compteur du tableau de bord (maquette n°4)
+function Tuile({ icone: Icone, libelle, valeur }) {
+  return (
+    <li className="flex flex-col gap-2 rounded-card border border-line bg-white p-4 shadow-card">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-light text-brand">
+        <Icone className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+      </span>
+      <span className="text-sm font-bold leading-tight text-muted">{libelle}</span>
+      <span className="font-display text-[26px] font-bold leading-none text-ink tabular-nums">{valeur ?? '–'}</span>
+    </li>
+  )
+}
+
 // Accueil du client : « Mes demandes » (US05), avec le nombre d'offres et l'annulation (US06).
 export default function Accueil() {
   const { profil } = useSession()
@@ -131,12 +144,26 @@ export default function Accueil() {
     })
   }, [profil.id])
 
+  // Offres reçues : seulement sur les demandes encore ouvertes (celles où le client doit choisir)
+  const ouvertes = demandes?.filter((d) => d.status === 'ouverte')
+  const compteurs = [
+    [ClipboardList, 'Demandes ouvertes', ouvertes?.length],
+    [Inbox, 'Offres à comparer', ouvertes?.reduce((total, d) => total + d.nbOffres, 0)],
+    [Handshake, 'Artisans retenus', demandes?.filter((d) => d.status === 'attribuee').length],
+  ]
+
   return (
     <section className="flex flex-col gap-5">
       <div>
         <h1 className="text-[28px] leading-tight">Bonjour {prenom}</h1>
-        <p className="mt-1 text-muted">Suivez vos demandes et les offres reçues.</p>
+        <p className="mt-1 text-muted">Voici un aperçu de votre activité sur Mawkaf.</p>
       </div>
+
+      <ul aria-label="Résumé" className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        {compteurs.map(([icone, libelle, valeur]) => (
+          <Tuile key={libelle} icone={icone} libelle={libelle} valeur={valeur} />
+        ))}
+      </ul>
 
       {state?.demandePubliee && (
         <p role="status" className="flex items-center gap-1.5 rounded-xl bg-ok-light px-3 py-2 font-bold text-ok">
