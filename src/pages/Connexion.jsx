@@ -1,32 +1,36 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { AtSign, LockKeyhole } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 import { Filigrane, Logo } from '../components/Marque'
+import { Bouton, Champ, MessageErreur } from '../components/ui'
+import { connecter } from '../lib/auth'
+import { emailValide, telephoneValide } from '../lib/validation'
 
-// Connexion par e-mail et mot de passe.
-// Page minimale pour tester l'US04 avec un compte de test ; l'inscription relève de l'US03.
+// Connexion par e-mail ou par téléphone (US03), avec le style de la maquette (US04).
 export default function Connexion() {
-  const [email, setEmail] = useState('')
+  const [identifiant, setIdentifiant] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
-  const [erreur, setErreur] = useState('')
+  const [erreurs, setErreurs] = useState({})
+  const [erreurGenerale, setErreurGenerale] = useState(null)
   const [envoi, setEnvoi] = useState(false)
 
-  async function seConnecter(e) {
-    e.preventDefault()
-    setErreur('')
-    if (!email.trim() || !motDePasse) {
-      setErreur('Saisissez votre e-mail et votre mot de passe.')
-      return
+  async function envoyer(evenement) {
+    evenement.preventDefault()
+    setErreurGenerale(null)
+    const e = {
+      identifiant: emailValide(identifiant) || telephoneValide(identifiant)
+        ? null
+        : 'Saisissez votre e-mail ou votre téléphone (10 chiffres, commence par 06 ou 07).',
+      motDePasse: motDePasse ? null : 'Saisissez votre mot de passe.',
     }
+    setErreurs(e)
+    if (e.identifiant || e.motDePasse) return
+
     setEnvoi(true)
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: motDePasse,
-    })
+    const { erreur } = await connecter({ identifiant, motDePasse })
     setEnvoi(false)
-    if (error) {
-      setErreur('E-mail ou mot de passe incorrect. Vérifiez-les et réessayez.')
-    }
+    // En cas de succès, PageVisiteur envoie vers l'accueil du rôle une fois le profil chargé
+    if (erreur) setErreurGenerale(erreur)
   }
 
   return (
@@ -39,52 +43,22 @@ export default function Connexion() {
         <p className="mt-3 text-center text-[17px] text-muted">Artisans à la journée · Casablanca</p>
       </div>
 
-      <form onSubmit={seConnecter} className="relative mt-10 flex flex-col gap-5" noValidate>
-        <label className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-2 font-bold">
-            <AtSign className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
-            E-mail
-          </span>
-          <input
-            type="email"
-            autoComplete="email"
-            placeholder="nom@exemple.ma"
-            value={email}
-            aria-invalid={Boolean(erreur)}
-            onChange={(e) => setEmail(e.target.value)}
-            className="champ"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-2 font-bold">
-            <LockKeyhole className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
-            Mot de passe
-          </span>
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={motDePasse}
-            aria-invalid={Boolean(erreur)}
-            onChange={(e) => setMotDePasse(e.target.value)}
-            className="champ"
-          />
-        </label>
-
-        {erreur && (
-          <p role="alert" className="font-bold text-danger">
-            {erreur}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={envoi}
-          className="mt-2 min-h-14 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60"
-        >
-          {envoi ? 'Connexion…' : 'Se connecter'}
-        </button>
+      <form onSubmit={envoyer} noValidate className="relative mt-10 flex flex-col gap-5">
+        <Champ id="identifiant" label="E-mail ou téléphone" icone={AtSign} autoComplete="username"
+          placeholder="06 12 34 56 78" value={identifiant}
+          onChange={(e) => { setIdentifiant(e.target.value); setErreurs((x) => ({ ...x, identifiant: null })) }}
+          erreur={erreurs.identifiant} />
+        <Champ id="motDePasse" label="Mot de passe" icone={LockKeyhole} type="password"
+          autoComplete="current-password" value={motDePasse}
+          onChange={(e) => { setMotDePasse(e.target.value); setErreurs((x) => ({ ...x, motDePasse: null })) }}
+          erreur={erreurs.motDePasse} />
+        <MessageErreur>{erreurGenerale}</MessageErreur>
+        <Bouton type="submit" disabled={envoi} className="mt-2">{envoi ? 'Connexion…' : 'Se connecter'}</Bouton>
       </form>
+
+      <p className="relative mt-8 text-center text-lg">
+        Pas encore de compte ? <Link to="/inscription" className="font-bold text-brand underline">Créer un compte</Link>
+      </p>
     </main>
   )
 }
