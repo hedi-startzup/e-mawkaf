@@ -38,5 +38,29 @@ export async function chargerMesDemandes(idClient) {
     .eq('client_id', idClient)
     .order('created_at', { ascending: false })
   if (error) return { erreur: 'Impossible de charger vos demandes. Rechargez la page.' }
-  return { demandes: data }
+  if (data.length === 0) return { demandes: [] }
+
+  // Nombre d'offres reçues par demande, hors offres retirées (fonction nombre_offres, US06)
+  const comptes = await supabase.rpc('nombre_offres', { p_request_ids: data.map((d) => d.id) })
+  if (comptes.error) return { erreur: 'Impossible de charger vos demandes. Rechargez la page.' }
+  const nbParDemande = new Map(comptes.data.map((c) => [c.request_id, c.nb_offres]))
+  return { demandes: data.map((d) => ({ ...d, nbOffres: nbParDemande.get(d.id) ?? 0 })) }
+}
+
+// RG09 : une demande ouverte ou attribuée peut être annulée (la base refuse les autres cas)
+export function annulable(demande) {
+  return demande.status === 'ouverte' || demande.status === 'attribuee'
+}
+
+export async function annulerDemande(idDemande) {
+  const { data, error } = await supabase
+    .from('requests')
+    .update({ status: 'annulee' })
+    .eq('id', idDemande)
+    .select('status')
+    .maybeSingle()
+  if (error || data?.status !== 'annulee') {
+    return { erreur: "La demande n'a pas pu être annulée. Rechargez la page et réessayez." }
+  }
+  return {}
 }

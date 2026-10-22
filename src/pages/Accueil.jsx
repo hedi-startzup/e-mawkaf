@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { CalendarDays, Check, Plus } from 'lucide-react'
+import { CalendarDays, Check, Inbox, Plus, X } from 'lucide-react'
 import { Epingle, Etoile } from '../components/Marque'
 import { libelleJour } from '../lib/dates'
-import { chargerMesDemandes } from '../lib/demandes'
+import { annulable, annulerDemande, chargerMesDemandes } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 import { useSession } from '../lib/session'
 
@@ -14,7 +14,69 @@ const STATUTS = {
   annulee: { label: 'Annulée', classes: 'bg-gray-light text-muted' },
 }
 
-function CarteDemande({ demande }) {
+function texteOffres(nb) {
+  if (nb === 0) return 'Aucune offre pour l’instant'
+  return nb === 1 ? '1 offre reçue' : `${nb} offres reçues`
+}
+
+// Annulation avec confirmation dans la carte (RG09)
+function Annulation({ demande, surAnnulee }) {
+  const [confirmation, setConfirmation] = useState(false)
+  const [envoi, setEnvoi] = useState(false)
+  const [erreur, setErreur] = useState(null)
+
+  async function annuler() {
+    setEnvoi(true)
+    setErreur(null)
+    const { erreur: e } = await annulerDemande(demande.id)
+    setEnvoi(false)
+    if (e) return setErreur(e)
+    surAnnulee()
+  }
+
+  if (!confirmation) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirmation(true)}
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-danger bg-white px-5 font-bold text-danger hover:bg-gray-light"
+      >
+        <X className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+        Annuler la demande
+      </button>
+    )
+  }
+
+  return (
+    <div role="group" aria-label="Confirmer l'annulation" className="flex flex-col gap-3 rounded-xl border-2 border-danger bg-white p-3">
+      <p className="font-bold">
+        Annuler cette demande ? Les artisans ne la verront plus.
+        {demande.status === 'attribuee' && ' L’artisan retenu verra qu’elle est annulée.'}
+      </p>
+      {erreur && <p role="alert" className="font-bold text-danger">{erreur}</p>}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          disabled={envoi}
+          onClick={annuler}
+          className="min-h-12 rounded-full bg-danger px-4 font-bold text-white active:scale-[0.98] disabled:opacity-60"
+        >
+          {envoi ? 'Annulation…' : 'Oui, annuler'}
+        </button>
+        <button
+          type="button"
+          disabled={envoi}
+          onClick={() => { setConfirmation(false); setErreur(null) }}
+          className="min-h-12 rounded-full border-2 border-brand bg-white px-4 font-bold text-brand hover:bg-brand-light"
+        >
+          Non, la garder
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function CarteDemande({ demande, surAnnulee }) {
   const Icone = iconeMetier(demande.metier?.icon)
   const statut = STATUTS[demande.status] ?? STATUTS.ouverte
   const lieu = [demande.neighborhood, demande.district].filter(Boolean).join(', ')
@@ -40,14 +102,21 @@ function CarteDemande({ demande }) {
           </span>
         )}
       </div>
-      <p className="font-display text-xl font-bold text-accent">
-        {demande.proposed_price ? `${demande.proposed_price} DH` : 'Devis demandé'}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-display text-xl font-bold text-accent">
+          {demande.proposed_price ? `${demande.proposed_price} DH` : 'Devis demandé'}
+        </p>
+        <p className="inline-flex items-center gap-1.5 font-bold text-brand">
+          <Inbox className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+          {texteOffres(demande.nbOffres)}
+        </p>
+      </div>
+      {annulable(demande) && <Annulation demande={demande} surAnnulee={surAnnulee} />}
     </li>
   )
 }
 
-// Accueil du client : « Mes demandes » (US05). US06 y ajoutera le nombre d'offres et l'annulation.
+// Accueil du client : « Mes demandes » (US05), avec le nombre d'offres et l'annulation (US06).
 export default function Accueil() {
   const { profil } = useSession()
   const { state } = useLocation()
@@ -93,7 +162,14 @@ export default function Accueil() {
       )}
       {demandes?.length > 0 && (
         <ul className="flex flex-col gap-3">
-          {demandes.map((demande) => <CarteDemande key={demande.id} demande={demande} />)}
+          {demandes.map((demande) => (
+            <CarteDemande
+              key={demande.id}
+              demande={demande}
+              surAnnulee={() => setDemandes((liste) =>
+                liste.map((d) => (d.id === demande.id ? { ...d, status: 'annulee' } : d)))}
+            />
+          ))}
         </ul>
       )}
     </section>
