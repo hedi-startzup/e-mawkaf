@@ -5,6 +5,7 @@ import BoutonActualiser from '../components/BoutonActualiser'
 import Cloture from '../components/Cloture'
 import { Epingle, Etoile } from '../components/Marque'
 import MiseEnRelation from '../components/MiseEnRelation'
+import { Avatar } from '../components/PhotoProfil'
 import { libelleJour } from '../lib/dates'
 import { STATUTS_DEMANDE, chargerDetailDemande, choisirOffre, texteNote } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
@@ -72,7 +73,9 @@ function CarteOffre({ offre, choixPossible, surChoisie }) {
   return (
     <li className={`flex flex-col gap-3 rounded-card border-2 bg-white p-4 shadow-card ${acceptee ? 'border-ok' : 'border-line'}`}>
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        {/* US23 : le client voit qui va venir */}
+        <Avatar chemin={offre.artisan.avatar_path} nom={prenom} />
+        <div className="min-w-0 flex-1">
           <p className="truncate font-display text-xl font-bold text-brand">{prenom}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             {note ? (

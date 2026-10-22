@@ -6,6 +6,7 @@ import { iconeMetier } from '../lib/icones'
 import { texteNote } from '../lib/demandes'
 import { Epingle } from '../components/Marque'
 import Disponibilite from '../components/Disponibilite'
+import { Avatar, ChoixPhoto } from '../components/PhotoProfil'
 
 const METIERS_MAX = 3
 const QUARTIER_MAX = 60
@@ -116,9 +117,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
       {/* Carte d'en-tête du profil (maquette n°7) : ce que voit un client */}
       <div className="flex flex-col gap-4 rounded-card border border-line bg-white p-5 shadow-card">
         <div className="flex items-center gap-4">
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-brand font-display text-2xl font-bold text-white" aria-hidden="true">
-            {profil.full_name.trim().charAt(0).toUpperCase()}
-          </span>
+          <Avatar chemin={profil.avatar_path} nom={profil.full_name} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="truncate font-display text-xl font-bold text-brand">{profil.full_name}</p>
@@ -154,6 +153,9 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
           </ul>
         )}
       </div>
+
+      {/* US23 : photo obligatoire pour faire une offre */}
+      <ChoixPhoto profil={profil} surMiseAJour={surMiseAJour} obligatoire />
 
       <Disponibilite profil={profil} surMiseAJour={surMiseAJour} />
 

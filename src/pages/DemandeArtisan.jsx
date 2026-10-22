@@ -1,6 +1,6 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Banknote, CalendarDays, Check, MessageSquareText, Pencil, Send, Undo2, X } from 'lucide-react'
+import { ArrowLeft, Banknote, CalendarDays, Camera, Check, MessageSquareText, Pencil, Send, Undo2, X } from 'lucide-react'
 import BoutonActualiser from '../components/BoutonActualiser'
 import { Epingle } from '../components/Marque'
 import MiseEnRelation from '../components/MiseEnRelation'
@@ -58,6 +58,7 @@ export default function DemandeArtisan() {
             demande={demande}
             offre={offre}
             idArtisan={profil.id}
+            aPhoto={Boolean(profil.avatar_path)}
             surEnvoi={() => setVersion((v) => v + 1)}
           />
         </>
@@ -103,7 +104,7 @@ function Resume({ demande }) {
   )
 }
 
-function Offre({ demande, offre, idArtisan, surEnvoi }) {
+function Offre({ demande, offre, idArtisan, aPhoto, surEnvoi }) {
   const ouverte = demande.status === 'ouverte'
   const enAttente = offre?.status === 'en_attente'
   // Mode « formulaire » : demande de devis, ou artisan qui modifie / propose un autre prix
@@ -199,6 +200,24 @@ function Offre({ demande, offre, idArtisan, surEnvoi }) {
 
   if (!ouverte) {
     return <p className="text-muted">Cette demande n'est plus ouverte : vous ne pouvez plus faire d'offre.</p>
+  }
+
+  // US23 : pas de photo, pas d'offre (la base le refuse aussi)
+  if (!aPhoto) {
+    return (
+      <div className="flex flex-col gap-4 rounded-card border-2 border-brand bg-brand-light p-4">
+        <div className="flex items-start gap-3">
+          <Camera className="mt-0.5 h-6 w-6 shrink-0 text-brand" strokeWidth={2.5} aria-hidden="true" />
+          <p className="font-bold">Ajoutez une photo de profil pour faire une offre : le client veut savoir qui va venir.</p>
+        </div>
+        <Link
+          to="/artisan/profil"
+          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+        >
+          Ajouter ma photo
+        </Link>
+      </div>
+    )
   }
 
   const avecPrix = Boolean(demande.proposed_price)

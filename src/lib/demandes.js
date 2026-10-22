@@ -94,7 +94,7 @@ export async function chargerDetailDemande(idDemande) {
     supabase
       .from('offers')
       // offers est liée à profiles par artisan_id : on précise la clé étrangère à suivre
-      .select('id, price, message, status, created_at, artisan:profiles!offers_artisan_id_fkey(id, full_name, available_today)')
+      .select('id, price, message, status, created_at, artisan:profiles!offers_artisan_id_fkey(id, full_name, available_today, avatar_path)')
       .eq('request_id', idDemande)
       .neq('status', 'retiree')
       .order('price', { ascending: true })

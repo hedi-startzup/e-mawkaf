@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AtSign, Check, LockKeyhole, Smartphone, UserRound } from 'lucide-react'
+import { ChoixPhoto } from '../components/PhotoProfil'
 import { Bouton, Champ, MessageErreur, Titre } from '../components/ui'
 import { changerMotDePasse, chargerMonTelephone, modifierCompte } from '../lib/auth'
 import { useSession } from '../lib/session'
@@ -134,10 +135,13 @@ function MotDePasse() {
 
 // Paramètres du compte (maquette n°9), pour les clients et les artisans
 export default function Parametres() {
+  const { profil, mettreAJourProfil } = useSession()
   return (
     <section className="flex flex-col gap-6">
       <Titre sousTitre="Gérez les informations de votre compte.">Paramètres</Titre>
       <div className="grid items-start gap-5 md:grid-cols-2">
+        {/* US23 : facultative pour le client, obligatoire pour l'artisan (aussi dans « Mon profil ») */}
+        <ChoixPhoto profil={profil} surMiseAJour={mettreAJourProfil} obligatoire={profil.role === 'artisan'} />
         <InformationsCompte />
         <MotDePasse />
       </div>

@@ -49,13 +49,16 @@ create table public.profiles (
   trades         text[] not null default '{}',   -- identifiants de public.trades
   available_today boolean not null default true,
   credit_balance  integer not null default 0,      -- DH, peut être négatif (simulation US15)
+  avatar_path     text,                            -- photo dans Storage « avatars » (US23, migration 011)
   created_at      timestamptz not null default now(),
   -- RG03 : un artisan a au plus 3 métiers (0 tant que son profil n'est pas complété, US04) ;
   -- un client n'en a aucun
   constraint profiles_trades_selon_role check (
        (role = 'artisan' and cardinality(trades) <= 3)
     or (role = 'client'  and cardinality(trades) = 0)
-  )
+  ),
+  -- US23 : la photo est toujours rangée dans le dossier de son propriétaire
+  constraint profiles_avatar_dans_son_dossier check (avatar_path is null or avatar_path like id::text || '/%')
 );
 
 -- 1.3 contacts : téléphone, séparé du profil pour le protéger (RG02, RG08)
@@ -343,7 +346,7 @@ grant select on public.trades to authenticated;
 grant select on public.profiles to authenticated;
 grant insert (id, role, full_name, city, district, neighborhood, trades, available_today)
   on public.profiles to authenticated;
-grant update (full_name, city, district, neighborhood, trades, available_today)
+grant update (full_name, city, district, neighborhood, trades, available_today, avatar_path)
   on public.profiles to authenticated;
 
 grant select, insert, update on public.contacts to authenticated;
@@ -427,6 +430,10 @@ create policy offers_insert on public.offers
   with check (
     artisan_id = (select auth.uid())
     and private.artisan_can_see_request(request_id)   -- demande ouverte et visible
+    and exists (                                      -- US23 : pas de photo, pas d'offre
+      select 1 from public.profiles p
+      where p.id = (select auth.uid()) and p.avatar_path is not null
+    )
   );
 create policy offers_update on public.offers
   for update to authenticated
@@ -641,5 +648,34 @@ create policy messages_insert on public.messages
 
 -- Realtime : les nouveaux messages s'affichent sans recharger (la RLS s'applique aussi au Realtime)
 alter publication supabase_realtime add table public.messages;
+
+commit;
+
+-- =====================================================================
+-- US23 (migration 011) : photos de profil dans Supabase Storage
+-- Espace « avatars » privé : lisible par les utilisateurs connectés, chacun ne dépose que la sienne.
+-- =====================================================================
+begin;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', false, 1048576, array['image/jpeg', 'image/png'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+create policy avatars_select on storage.objects
+  for select to authenticated
+  using (bucket_id = 'avatars');
+create policy avatars_insert on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy avatars_update on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy avatars_delete on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
 
 commit;
