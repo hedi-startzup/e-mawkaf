@@ -12,13 +12,13 @@ export async function chargerMetiersDemande() {
 }
 
 // Publie une demande (US05). La base vérifie aussi les règles (RLS, dates, prix).
-export async function publierDemande({ idClient, metier, description, arrondissement, quartier, jour, prix }) {
+export async function publierDemande({ idClient, metier, description, ville, arrondissement, quartier, jour, prix }) {
   const { error } = await supabase.from('requests').insert({
     client_id: idClient,
     trade: metier,
     description: description.trim(),
-    city: 'Casablanca',
-    district: arrondissement,
+    city: ville, // US17 : ville choisie dans la liste
+    district: arrondissement || null,
     neighborhood: quartier.trim() || null,
     service_date: jour,
     proposed_price: prix.trim() ? Number(prix) : null, // vide = demande de devis (RG04)
