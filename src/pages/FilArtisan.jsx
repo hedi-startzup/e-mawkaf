@@ -1,8 +1,8 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { CalendarDays, ChevronRight, MessageSquareText, UserRound } from 'lucide-react'
+import { CalendarDays, ChevronRight, MessageSquareText, Search, UserRound } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { libelleJour } from '../lib/dates'
+import { aujourdhuiCasablanca, demainCasablanca, libelleJour } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { Epingle, Etoile } from '../components/Marque'
 
@@ -15,6 +15,7 @@ export default function FilArtisan({ profil, allerAuProfil }) {
   // Recharger le fil quand les métiers ou la disponibilité changent
   const cle = `${profil.trades.join(',')}|${profil.available_today}`
   const [resultat, setResultat] = useState({ cle: null, demandes: [], erreur: '' })
+  const [onglet, setOnglet] = useState('toutes')
 
   useEffect(() => {
     if (sansMetier) return
@@ -51,17 +52,45 @@ export default function FilArtisan({ profil, allerAuProfil }) {
   }
 
   const chargement = resultat.cle !== cle
-  const { demandes, erreur } = resultat
+  const { erreur } = resultat
+  // Onglets de la maquette : filtre d'affichage seulement, la base filtre déjà (RG05, RG12)
+  const onglets = [
+    ['toutes', 'Toutes', null],
+    // RG12 : pas d'onglet « Aujourd'hui » pour un artisan qui n'est pas disponible aujourd'hui
+    ...(profil.available_today ? [['aujourdhui', "Aujourd'hui", aujourdhuiCasablanca()]] : []),
+    ['demain', 'Demain', demainCasablanca()],
+  ]
+  const jourFiltre = onglets.find(([id]) => id === onglet)?.[2]
+  const demandes = jourFiltre
+    ? resultat.demandes.filter((d) => d.service_date === jourFiltre)
+    : resultat.demandes
 
   return (
     <section className="flex flex-col gap-5">
       <div>
-        <h1 className="text-[28px] leading-tight">Mon fil</h1>
+        <h1 className="text-[28px] leading-tight">Demandes qui vous correspondent</h1>
         <p className="mt-1 text-muted">
           {profil.available_today
             ? 'Demandes pour aujourd’hui et demain.'
             : 'Vous n’êtes pas disponible aujourd’hui : demandes pour demain seulement.'}
         </p>
+      </div>
+
+      <div role="tablist" aria-label="Jour" className="flex gap-2 overflow-x-auto">
+        {onglets.map(([id, libelle]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={onglet === id}
+            onClick={() => setOnglet(id)}
+            className={`min-h-11 shrink-0 rounded-full px-5 font-bold ${
+              onglet === id ? 'bg-brand text-white shadow-press' : 'border border-line bg-white text-muted hover:text-ink'
+            }`}
+          >
+            {libelle}
+          </button>
+        ))}
       </div>
 
       {chargement && <p className="text-muted">Chargement des demandes…</p>}
@@ -73,13 +102,27 @@ export default function FilArtisan({ profil, allerAuProfil }) {
       )}
 
       {!chargement && !erreur && demandes.length === 0 && (
-        <div className="flex flex-col items-center px-4 py-10 text-center">
-          <Etoile className="mb-5 h-32 w-32 text-sand-deep" />
-          <p className="font-display text-[22px] font-bold text-brand">Aucune demande pour vous</p>
-          <p className="mt-2 text-muted">
-            Aucune demande ouverte ne correspond à vos métiers dans votre ville pour le moment.
-            Revenez un peu plus tard.
+        // État vide de la maquette (n°11)
+        <div className="flex flex-col items-center rounded-card border border-line bg-white px-4 py-10 text-center shadow-card">
+          <span className="relative mb-5 grid h-32 w-32 place-items-center">
+            <Etoile className="absolute inset-0 h-32 w-32 text-sand" />
+            <span className="relative grid h-16 w-16 place-items-center rounded-full bg-white text-brand shadow-card">
+              <Search className="h-8 w-8" strokeWidth={2.5} aria-hidden="true" />
+            </span>
+          </span>
+          <p className="font-display text-[22px] font-bold text-brand">Aucune demande correspondante</p>
+          <p className="mt-2 max-w-sm text-muted">
+            Vous n’avez pas de demande correspondant à vos métiers, votre ville ou vos disponibilités pour le moment.
           </p>
+          {onglet !== 'toutes' && (
+            <button
+              type="button"
+              onClick={() => setOnglet('toutes')}
+              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-brand px-6 font-bold text-white shadow-press hover:bg-brand-dark"
+            >
+              Voir toutes les demandes
+            </button>
+          )}
         </div>
       )}
 

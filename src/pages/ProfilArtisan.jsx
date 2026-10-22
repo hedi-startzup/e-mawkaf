@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { AlertCircle, Check, ChevronDown, Save, Sun } from 'lucide-react'
+import { AlertCircle, Check, ChevronDown, Save, Star, Sun } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { ARRONDISSEMENTS_CASABLANCA } from '../lib/quartiers'
 import { iconeMetier } from '../lib/icones'
+import { texteNote } from '../lib/demandes'
 import { Epingle } from '../components/Marque'
 
 const METIERS_MAX = 3
@@ -30,6 +31,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
   const [message, setMessage] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const [erreurDispo, setErreurDispo] = useState('')
+  const [note, setNote] = useState(null)
 
   // Liste des métiers proposés aux artisans : jamais « Autre » (for_artisans = faux).
   useEffect(() => {
@@ -48,6 +50,16 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
         setChargementMetiers(false)
       })
   }, [])
+
+  // Note de l'artisan (RG11) : moyenne et nombre d'avis, « Nouveau » s'il n'en a aucun
+  useEffect(() => {
+    supabase
+      .from('artisan_ratings')
+      .select('average_score, ratings_count')
+      .eq('artisan_id', profil.id)
+      .maybeSingle()
+      .then(({ data }) => setNote(data ?? null))
+  }, [profil.id])
 
   function basculerMetier(id) {
     setMessage('')
@@ -112,9 +124,48 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
 
   return (
     <section className="flex flex-col gap-8 md:mx-auto md:w-full md:max-w-2xl">
-      <div>
-        <h1 className="text-[28px] leading-tight">Mon profil</h1>
-        <p className="mt-1 text-muted">{profil.full_name}</p>
+      <h1 className="text-[28px] leading-tight">Mon profil</h1>
+
+      {/* Carte d'en-tête du profil (maquette n°7) : ce que voit un client */}
+      <div className="flex flex-col gap-4 rounded-card border border-line bg-white p-5 shadow-card">
+        <div className="flex items-center gap-4">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-brand font-display text-2xl font-bold text-white" aria-hidden="true">
+            {profil.full_name.trim().charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate font-display text-xl font-bold text-brand">{profil.full_name}</p>
+              {dispo && (
+                <span className="rounded-full bg-ok-light px-2.5 py-0.5 text-sm font-bold text-ok">Disponible</span>
+              )}
+            </div>
+            <p className="mt-1 inline-flex items-center gap-1.5 font-bold">
+              <Star className="h-5 w-5 fill-accent text-accent" strokeWidth={2} aria-hidden="true" />
+              {texteNote(note)?.replace(' ★', '') ?? 'Nouveau'}
+            </p>
+            <p className="mt-0.5 flex items-center gap-1.5 text-muted">
+              <Epingle className="h-5 w-4" />
+              {[profil.district, 'Casablanca'].filter(Boolean).join(', ')}
+            </p>
+          </div>
+        </div>
+        {profil.trades.length > 0 && (
+          <ul aria-label="Mes métiers enregistrés" className="flex flex-wrap gap-2">
+            {profil.trades.map((id) => {
+              const metier = metiers.find((m) => m.id === id)
+              if (!metier) return null
+              const Icone = iconeMetier(metier.icon)
+              return (
+                <li key={id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface py-1 pl-1 pr-3 font-bold">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-sand text-brand">
+                    <Icone className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+                  </span>
+                  {metier.label}
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
