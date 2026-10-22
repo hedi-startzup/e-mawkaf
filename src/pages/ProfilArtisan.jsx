@@ -111,7 +111,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
   const dispo = profil.available_today
 
   return (
-    <section className="flex flex-col gap-8">
+    <section className="flex flex-col gap-8 md:mx-auto md:w-full md:max-w-2xl">
       <div>
         <h1 className="text-[28px] leading-tight">Mon profil</h1>
         <p className="mt-1 text-muted">{profil.full_name}</p>

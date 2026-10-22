@@ -41,9 +41,9 @@ export default function MesOffres() {
       )}
 
       {offres.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid gap-3 md:grid-cols-2 md:gap-4">
           {offres.map((offre) => (
-            <li key={offre.id}>
+            <li key={offre.id} className="h-full">
               <CarteOffre offre={offre} />
             </li>
           ))}
@@ -59,7 +59,7 @@ function CarteOffre({ offre }) {
   const lieu = demande ? [demande.neighborhood, demande.district].filter(Boolean).join(', ') : ''
 
   const contenu = (
-    <article className="flex flex-col gap-3 rounded-card border border-line bg-white p-4 shadow-card">
+    <article className="flex h-full flex-col gap-3 rounded-card border border-line bg-white p-4 shadow-card transition group-hover:border-brand group-hover:shadow-press">
       <div className="flex items-center gap-3">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-sand text-brand">
           {createElement(iconeMetier(demande?.metier?.icon), {
@@ -94,7 +94,7 @@ function CarteOffre({ offre }) {
   )
 
   return demande ? (
-    <Link to={`/artisan/demandes/${demande.id}`} className="block rounded-card">
+    <Link to={`/artisan/demandes/${demande.id}`} className="group block h-full rounded-card">
       {contenu}
     </Link>
   ) : (
