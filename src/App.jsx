@@ -4,6 +4,7 @@ import { PageProtegee, PageVisiteur, SessionProvider, useSession } from './lib/s
 import Accueil from './pages/Accueil'
 import Connexion from './pages/Connexion'
 import DemandeArtisan from './pages/DemandeArtisan'
+import DetailDemande from './pages/DetailDemande'
 import FilArtisan from './pages/FilArtisan'
 import Inscription from './pages/Inscription'
 import MesOffres from './pages/MesOffres'
@@ -33,6 +34,7 @@ function App() {
           <Route element={<PageProtegee role="client"><EspaceConnecte /></PageProtegee>}>
             <Route path="/client" element={<Accueil />} />
             <Route path="/client/publier" element={<PublierDemande />} />
+            <Route path="/client/demandes/:id" element={<DetailDemande />} />
           </Route>
 
           <Route element={<PageProtegee role="artisan"><EspaceConnecte artisan /></PageProtegee>}>
