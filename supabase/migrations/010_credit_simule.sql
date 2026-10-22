@@ -1,7 +1,7 @@
 -- Mawkaf — US15 (MAW-22) : recharge de crédit et commission simulées (aucun argent réel)
 begin;
 
--- Recharge simulée (US15) : 100, 200 ou 500 DH, par l'artisan connecté, sans argent réel.
+-- Recharge simulée (US15) : montant libre en DH entiers, de 50 à 5 000 (comme RG04), par l'artisan connecté, sans argent réel.
 -- Le crédit ne s'écrit jamais depuis l'appli : seule cette fonction l'augmente.
 create or replace function public.recharger_credit(montant integer)
 returns integer
@@ -11,8 +11,8 @@ as $$
 declare
   v_solde integer;
 begin
-  if montant not in (100, 200, 500) then
-    raise exception 'Montant de recharge invalide : 100, 200 ou 500 DH.';
+  if montant is null or montant < 50 or montant > 5000 then
+    raise exception 'Montant de recharge invalide : entre 50 et 5 000 DH.';
   end if;
   if (select role from public.profiles where id = (select auth.uid())) is distinct from 'artisan' then
     raise exception 'Seul un artisan peut recharger son crédit.';

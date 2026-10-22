@@ -5,7 +5,9 @@ import { MessageErreur } from '../components/ui'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/session'
 
-const MONTANTS = [100, 200, 500]
+const MONTANTS = [100, 200, 500] // raccourcis ; tout montant de 50 à 5 000 DH est possible
+const RECHARGE_MIN = 50
+const RECHARGE_MAX = 5000
 
 const LIBELLES = {
   recharge_simulee: 'Recharge simulée',
@@ -34,6 +36,7 @@ export default function MonCredit() {
   const [recharge, setRecharge] = useState(null) // { montant, reference } pendant la confirmation
   const [envoi, setEnvoi] = useState(false)
   const [erreurRecharge, setErreurRecharge] = useState(null)
+  const [montantLibre, setMontantLibre] = useState('')
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -58,6 +61,18 @@ export default function MonCredit() {
     }
   }, [profil.id, version])
 
+  // Vérifie le montant (entier, 50 à 5 000 DH) puis affiche la référence fictive
+  function choisirMontant(valeur) {
+    setMessage('')
+    setErreurRecharge(null)
+    const texte = String(valeur).trim()
+    if (!/^\d+$/.test(texte) || Number(texte) < RECHARGE_MIN || Number(texte) > RECHARGE_MAX) {
+      setErreurRecharge(`Montant : un nombre entier entre ${RECHARGE_MIN} et ${RECHARGE_MAX.toLocaleString('fr-FR')} DH, sans centimes. Exemple : 350`)
+      return
+    }
+    setRecharge({ montant: Number(texte), reference: referenceFictive() })
+  }
+
   async function confirmerRecharge() {
     setEnvoi(true)
     setErreurRecharge(null)
@@ -69,6 +84,7 @@ export default function MonCredit() {
     }
     setMessage(`Recharge simulée de ${recharge.montant} DH ajoutée à votre crédit.`)
     setRecharge(null)
+    setMontantLibre('')
     setVersion((v) => v + 1)
   }
 
@@ -111,21 +127,52 @@ export default function MonCredit() {
         </p>
 
         {!recharge && (
-          <div className="grid grid-cols-3 gap-3">
-            {MONTANTS.map((montant) => (
-              <button
-                key={montant}
-                type="button"
-                onClick={() => {
-                  setMessage('')
-                  setErreurRecharge(null)
-                  setRecharge({ montant, reference: referenceFictive() })
-                }}
-                className="min-h-14 rounded-2xl border-2 border-partenaire bg-white text-lg font-bold text-partenaire-ink hover:bg-partenaire active:scale-[0.97]"
-              >
-                {montant} DH
-              </button>
-            ))}
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-3">
+              {MONTANTS.map((montant) => (
+                <button
+                  key={montant}
+                  type="button"
+                  onClick={() => choisirMontant(String(montant))}
+                  className="min-h-14 rounded-2xl border-2 border-partenaire bg-white text-lg font-bold text-partenaire-ink hover:bg-partenaire active:scale-[0.97]"
+                >
+                  {montant} DH
+                </button>
+              ))}
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                choisirMontant(montantLibre)
+              }}
+              className="flex flex-col gap-1.5"
+              noValidate
+            >
+              <label htmlFor="montant-libre" className="font-bold text-partenaire-ink">
+                Autre montant (de {RECHARGE_MIN} à {RECHARGE_MAX.toLocaleString('fr-FR')} DH)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="montant-libre"
+                  inputMode="numeric"
+                  placeholder="Exemple : 350"
+                  value={montantLibre}
+                  aria-invalid={Boolean(erreurRecharge)}
+                  onChange={(e) => {
+                    setMontantLibre(e.target.value.replace(/\s/g, ''))
+                    setErreurRecharge(null)
+                  }}
+                  className="champ"
+                />
+                <button
+                  type="submit"
+                  className="min-h-12 shrink-0 rounded-xl bg-partenaire px-4 font-bold text-partenaire-ink hover:brightness-95"
+                >
+                  Continuer
+                </button>
+              </div>
+              <MessageErreur>{erreurRecharge}</MessageErreur>
+            </form>
           </div>
         )}
 
