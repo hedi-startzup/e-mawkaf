@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
+
 // Composants de base partagés, conformes aux règles visuelles du CLAUDE.md et au style
 // de la maquette : mobile d'abord (375 px), gros boutons, jetons de couleur uniquement.
 
@@ -31,20 +34,39 @@ export function Bouton({ children, variante = 'principal', className = '', ...pr
 }
 
 // Champ de saisie avec libellé (et pictogramme facultatif), aide et message d'erreur.
+// Un champ mot de passe a un bouton « œil » pour afficher ce qu'on tape (maquette).
 export function Champ({ id, label, icone: Icone, erreur, aide, ...props }) {
+  const [visible, setVisible] = useState(false)
+  const motDePasse = props.type === 'password'
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="flex items-center gap-2 font-bold">
         {Icone && <Icone className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />}
         {label}
       </label>
-      <input
-        id={id}
-        aria-invalid={Boolean(erreur)}
-        aria-describedby={erreur ? `${id}-erreur` : undefined}
-        className="champ"
-        {...props}
-      />
+      <span className="relative">
+        <input
+          id={id}
+          aria-invalid={Boolean(erreur)}
+          aria-describedby={erreur ? `${id}-erreur` : undefined}
+          className={motDePasse ? 'champ pr-12' : 'champ'}
+          {...props}
+          type={motDePasse && visible ? 'text' : props.type}
+        />
+        {motDePasse && (
+          <button
+            type="button"
+            onClick={() => setVisible((v) => !v)}
+            aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            aria-pressed={visible}
+            className="absolute right-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-muted hover:text-brand"
+          >
+            {visible
+              ? <EyeOff className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+              : <Eye className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />}
+          </button>
+        )}
+      </span>
       {aide && !erreur && <p className="text-muted">{aide}</p>}
       {erreur && <p id={`${id}-erreur`} className="font-bold text-danger">{erreur}</p>}
     </div>

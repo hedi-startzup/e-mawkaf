@@ -35,15 +35,15 @@ export default function Connexion() {
 
   return (
     <CadreVisiteur>
-      <Titre sousTitre="Artisans à la journée · Casablanca">Connectez-vous à votre compte</Titre>
+      <Titre>Connectez-vous à votre compte</Titre>
 
       <form onSubmit={envoyer} noValidate className="flex flex-col gap-5">
         <Champ id="identifiant" label="E-mail ou téléphone" icone={AtSign} autoComplete="username"
-          placeholder="06 12 34 56 78" value={identifiant}
+          placeholder="Entrez votre e-mail ou téléphone" value={identifiant}
           onChange={(e) => { setIdentifiant(e.target.value); setErreurs((x) => ({ ...x, identifiant: null })) }}
           erreur={erreurs.identifiant} />
         <Champ id="motDePasse" label="Mot de passe" icone={LockKeyhole} type="password"
-          autoComplete="current-password" value={motDePasse}
+          autoComplete="current-password" placeholder="Entrez votre mot de passe" value={motDePasse}
           onChange={(e) => { setMotDePasse(e.target.value); setErreurs((x) => ({ ...x, motDePasse: null })) }}
           erreur={erreurs.motDePasse} />
         <MessageErreur>{erreurGenerale}</MessageErreur>
@@ -56,7 +56,7 @@ export default function Connexion() {
       </form>
 
       <p className="text-center text-lg">
-        Pas encore de compte ? <Link to="/inscription" className="font-bold text-brand underline">Créer un compte</Link>
+        Pas encore de compte ? <Link to="/inscription" className="font-bold text-brand underline">S'inscrire</Link>
       </p>
     </CadreVisiteur>
   )
