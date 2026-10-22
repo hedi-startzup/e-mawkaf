@@ -70,7 +70,7 @@ Huit tables. RLS activée sur chacune.
 
 | Table | Colonnes principales | Lecture | Écriture |
 |---|---|---|---|
-| `profiles` | id (= compte Supabase), role, full_name, city, district, trades (liste), available_today, credit_balance (DH entier, peut être négatif en simulation), created_at | tout utilisateur connecté | chacun son profil |
+| `profiles` | id (= compte Supabase), role, full_name, city, district, trades (liste), available_today, credit_balance (DH entier, peut être négatif en simulation), avatar_path (photo dans Storage « avatars », US23), created_at | tout utilisateur connecté | chacun son profil |
 | `contacts` | user_id, phone | soi-même, et l'autre partie d'une demande attribuée ou terminée | soi-même |
 | `trades` | id, label, icon, is_active, sort_order, for_artisans (faux pour « Autre ») | tout utilisateur connecté ; visiteurs pour les métiers actifs (page d'accueil, migration 008) | administrateur (tableau de bord Supabase) |
 | `requests` | id, client_id, trade, description, city, district, service_date, proposed_price (nullable), status, accepted_offer_id, created_at | client auteur ; artisans pour les demandes ouvertes qui les concernent ; artisan retenu | client auteur |
@@ -94,8 +94,9 @@ Huit tables. RLS activée sur chacune.
 ## Périmètre
 - **Lot 1 (garanti)** : US01 à US14, plus inscription téléphone/e-mail, table `trades`, demande « Autre » / devis, pictogrammes, interface en français, US15 (simulation de crédit et de commission 14 %).
 - **Ajouts validés par Hedi le 22/10/2026 (MAW-28, maquette)** : page d'accueil publique, tableau de bord client, demande en 3 étapes, Paramètres (nom, téléphone, mot de passe), connexion Google avec « Compléter mon profil », messagerie entre le client et l'artisan retenu après attribution (même règle que RG08).
+- **Ajouts validés par Hedi le 22/10/2026 (idées de l'équipe)** : US23 photo de profil (obligatoire pour faire une offre, facultative pour le client, lisible par les utilisateurs connectés seulement) ; US26 adresse d'intervention (adresse « Maison » dans le profil, ou « Autre adresse » à chaque demande, visible seulement par l'artisan retenu après attribution, même règle que RG08).
 - **Lot 2 (seulement si la vélocité le permet)** : US16 tarif indicatif, US17 autres villes, US18 PWA, US19 code de vérification simulé.
-- **Lot 3 (feuille de route, ne pas coder)** : photos, note vocale, messagerie avant attribution, négociation multi-tours ou directe, interface d'administration, litiges, calendrier façon Planity, carte/géolocalisation, darija/arabe, application native, notifications push, vrai paiement/portefeuille, vérification d'identité, vrai code SMS/WhatsApp.
+- **Lot 3 (feuille de route, ne pas coder)** : photos de demande (la photo de profil est validée, voir US23), note vocale, messagerie avant attribution, négociation multi-tours ou directe, interface d'administration, litiges, calendrier façon Planity, carte/géolocalisation, darija/arabe, application native, notifications push, vrai paiement/portefeuille, vérification d'identité, vrai code SMS/WhatsApp.
 
 ## Points à confirmer (ne pas trancher seul)
 - Les demandes « Autre » sont-elles visibles par tous les artisans de la ville ? (hypothèse actuelle : oui.)
