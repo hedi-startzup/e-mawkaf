@@ -42,6 +42,8 @@ export function SessionProvider({ children }) {
     profil: profilAJour ? resultatProfil.profil : null,
     erreurProfil: profilAJour ? resultatProfil.erreur : null,
     chargement: !sessionVerifiee || (Boolean(utilisateur) && !profilAJour),
+    // Après une modification enregistrée (ex. profil artisan, US04), met l'écran à jour
+    mettreAJourProfil: (profil) => setResultatProfil((r) => ({ ...r, profil })),
   }
 
   return <SessionContext.Provider value={valeur}>{children}</SessionContext.Provider>

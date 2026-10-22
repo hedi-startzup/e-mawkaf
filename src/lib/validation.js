@@ -21,18 +21,18 @@ export function emailValide(valeur) {
 }
 
 export function erreurNom(nom) {
-  if (nom.trim().length < 2) return 'Indique ton nom (2 lettres au moins).'
+  if (nom.trim().length < 2) return 'Saisissez votre nom (2 lettres au moins).'
   return null
 }
 
 export function erreurEmail(email) {
-  if (!email.trim()) return "Indique ton adresse e-mail."
+  if (!email.trim()) return "Saisissez votre adresse e-mail."
   if (!emailValide(email)) return "L'adresse e-mail n'est pas valide. Exemple : yasmine@gmail.com"
   return null
 }
 
 export function erreurTelephone(telephone) {
-  if (!telephone.trim()) return 'Indique ton numéro de téléphone.'
+  if (!telephone.trim()) return 'Saisissez votre numéro de téléphone.'
   if (!telephoneValide(telephone)) {
     return 'Le téléphone doit avoir 10 chiffres et commencer par 06 ou 07. Exemple : 06 12 34 56 78'
   }
@@ -45,6 +45,6 @@ export function erreurMotDePasse(motDePasse) {
 }
 
 export function erreurRole(role) {
-  if (role !== 'client' && role !== 'artisan') return 'Choisis « Je suis client » ou « Je suis artisan ».'
+  if (role !== 'client' && role !== 'artisan') return 'Choisissez « Je suis client » ou « Je suis artisan ».'
   return null
 }

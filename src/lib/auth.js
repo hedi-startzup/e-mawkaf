@@ -9,18 +9,18 @@ import { emailValide, nettoyerTelephone, telephoneInternational } from './valida
 function messageErreur(error) {
   const texte = (error?.message ?? '').toLowerCase()
   if (texte.includes('already registered') || texte.includes('already exists')) {
-    return 'Un compte existe déjà avec cet identifiant. Connecte-toi plutôt.'
+    return 'Un compte existe déjà avec cet identifiant. Connectez-vous plutôt.'
   }
   if (texte.includes('invalid login credentials')) {
     return 'Identifiant ou mot de passe incorrect.'
   }
   if (texte.includes('rate limit') || texte.includes('too many')) {
-    return 'Trop de tentatives. Attends une minute puis réessaie.'
+    return 'Trop de tentatives. Attendez une minute puis réessayez.'
   }
   if (texte.includes('fetch') || texte.includes('network')) {
-    return 'Pas de connexion internet. Vérifie ton réseau puis réessaie.'
+    return 'Pas de connexion internet. Vérifiez votre réseau puis réessayez.'
   }
-  return 'Une erreur est survenue. Réessaie dans un instant.'
+  return 'Une erreur est survenue. Réessayez dans un instant.'
 }
 
 // Crée un compte. modeIdentifiant vaut 'email' ou 'telephone'.
@@ -71,12 +71,12 @@ const DEJA_EXISTANT = '23505' // code Postgres : la ligne existe déjà
 // son contact, à partir des informations rangées dans le compte.
 export async function obtenirProfil(utilisateur) {
   const lecture = await supabase.from('profiles').select(COLONNES_PROFIL).eq('id', utilisateur.id).maybeSingle()
-  if (lecture.error) return { erreur: 'Impossible de charger ton profil. Recharge la page.' }
+  if (lecture.error) return { erreur: 'Impossible de charger votre profil. Rechargez la page.' }
   if (lecture.data) return { profil: lecture.data }
 
   const infos = utilisateur.user_metadata ?? {}
   if (!infos.role || !infos.full_name || !infos.phone) {
-    return { erreur: 'Ton compte est incomplet. Crée un nouveau compte ou contacte l\'équipe Mawkaf.' }
+    return { erreur: "Votre compte est incomplet. Créez un nouveau compte ou contactez l'équipe Mawkaf." }
   }
 
   // Le rôle n'est choisi qu'ici, une seule fois : la base interdit de le modifier ensuite (RG01)
@@ -86,12 +86,12 @@ export async function obtenirProfil(utilisateur) {
     .select(COLONNES_PROFIL)
     .single()
   if (profil.error && profil.error.code !== DEJA_EXISTANT) {
-    return { erreur: 'Impossible de créer ton profil. Recharge la page.' }
+    return { erreur: 'Impossible de créer votre profil. Rechargez la page.' }
   }
 
   const contact = await supabase.from('contacts').insert({ user_id: utilisateur.id, phone: infos.phone })
   if (contact.error && contact.error.code !== DEJA_EXISTANT) {
-    return { erreur: "Impossible d'enregistrer ton téléphone. Recharge la page." }
+    return { erreur: "Impossible d'enregistrer votre téléphone. Rechargez la page." }
   }
 
   // Si une autre création a eu lieu en même temps, on relit le profil
