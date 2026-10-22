@@ -1,18 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { CalendarDays, Check, Inbox, Plus, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, Inbox, Plus, X } from 'lucide-react'
 import { Epingle, Etoile } from '../components/Marque'
 import { libelleJour } from '../lib/dates'
-import { annulable, annulerDemande, chargerMesDemandes } from '../lib/demandes'
+import { STATUTS_DEMANDE, annulable, annulerDemande, chargerMesDemandes } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 import { useSession } from '../lib/session'
-
-const STATUTS = {
-  ouverte: { label: 'Ouverte', classes: 'bg-brand-light text-brand' },
-  attribuee: { label: 'Attribuée', classes: 'bg-sand text-brand-dark' },
-  terminee: { label: 'Terminée', classes: 'bg-ok-light text-ok' },
-  annulee: { label: 'Annulée', classes: 'bg-gray-light text-muted' },
-}
 
 function texteOffres(nb) {
   if (nb === 0) return 'Aucune offre pour l’instant'
@@ -78,7 +71,7 @@ function Annulation({ demande, surAnnulee }) {
 
 function CarteDemande({ demande, surAnnulee }) {
   const Icone = iconeMetier(demande.metier?.icon)
-  const statut = STATUTS[demande.status] ?? STATUTS.ouverte
+  const statut = STATUTS_DEMANDE[demande.status] ?? STATUTS_DEMANDE.ouverte
   const lieu = [demande.neighborhood, demande.district].filter(Boolean).join(', ')
   return (
     <li className="flex flex-col gap-3 rounded-card border border-line bg-white p-4 shadow-card">
@@ -111,6 +104,13 @@ function CarteDemande({ demande, surAnnulee }) {
           {texteOffres(demande.nbOffres)}
         </p>
       </div>
+      <Link
+        to={`/client/demandes/${demande.id}`}
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-brand px-5 font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+      >
+        {demande.status === 'ouverte' ? `Voir les offres (${demande.nbOffres})` : 'Voir le détail'}
+        <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
+      </Link>
       {annulable(demande) && <Annulation demande={demande} surAnnulee={surAnnulee} />}
     </li>
   )
