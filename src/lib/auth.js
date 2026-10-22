@@ -29,6 +29,8 @@ export async function inscrire({ modeIdentifiant, email, telephone, motDePasse, 
     full_name: nom.trim(),
     role,
     phone: nettoyerTelephone(telephone),
+    // US19 : une inscription par téléphone passe par l'écran de code simulé
+    ...(modeIdentifiant === 'telephone' && { telephone_a_verifier: true }),
   }
   const identifiant = modeIdentifiant === 'email'
     ? { email: email.trim().toLowerCase() }
@@ -79,6 +81,26 @@ export async function completerProfil({ role, nom, telephone }) {
   })
   if (error) return { erreur: messageErreur(error) }
   return obtenirProfil(data.user)
+}
+
+// --- Code de vérification simulé (US19) ---
+// Exercice de formation : aucun SMS ni message WhatsApp n'est envoyé, le code est fixe
+// et affiché à l'écran. Il ne protège rien ; le vrai code reste en feuille de route.
+export const CODE_SIMULE = '123456'
+
+// Seuls les comptes créés par téléphone depuis US19 portent cette étiquette
+export function telephoneAVerifier(utilisateur) {
+  return utilisateur?.user_metadata?.telephone_a_verifier === true
+}
+
+export async function validerCodeSimule(code) {
+  if (code.replace(/\s/g, '') !== CODE_SIMULE) {
+    return { erreur: 'Code incorrect. Vérifiez les 6 chiffres et réessayez.' }
+  }
+  // La session reçoit l'utilisateur mis à jour : l'écran de code laisse alors passer
+  const { error } = await supabase.auth.updateUser({ data: { telephone_a_verifier: false } })
+  if (error) return { erreur: 'La vérification a échoué. Vérifiez votre connexion et réessayez.' }
+  return {}
 }
 
 export async function deconnecter() {

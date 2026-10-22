@@ -12,21 +12,23 @@ import { Epingle, Etoile } from '../components/Marque'
 // aujourd'hui ou demain, disponibilité) est fait par la base : RLS de requests (RG05, RG12).
 export default function FilArtisan({ profil, allerAuProfil }) {
   const sansMetier = profil.trades.length === 0
-  // Recharger le fil quand les métiers ou la disponibilité changent
-  const cle = `${profil.trades.join(',')}|${profil.available_today}`
+  // Recharger le fil quand la ville, les métiers ou la disponibilité changent
+  const { city, available_today } = profil
+  const metiersCle = profil.trades.join(',')
+  const cle = `${city}|${metiersCle}|${available_today}`
   const [resultat, setResultat] = useState({ cle: null, demandes: [], erreur: '' })
   const [onglet, setOnglet] = useState('toutes')
 
   useEffect(() => {
     if (sansMetier) return
     let actif = true
-    chargerFilArtisan().then((r) => {
+    chargerFilArtisan({ city, available_today, trades: metiersCle.split(',') }).then((r) => {
       if (actif) setResultat({ cle, ...r })
     })
     return () => {
       actif = false
     }
-  }, [cle, sansMetier])
+  }, [cle, sansMetier, city, available_today, metiersCle])
 
   if (sansMetier) {
     return (

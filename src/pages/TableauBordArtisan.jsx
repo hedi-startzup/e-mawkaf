@@ -115,7 +115,7 @@ function CarteProfil({ profil, metiers, surMiseAJour }) {
           <p className="truncate font-display text-lg font-bold text-brand">{profil.full_name}</p>
           <p className="flex items-center gap-1.5 text-muted">
             <Epingle className="h-5 w-4" />
-            {[profil.district, 'Casablanca'].filter(Boolean).join(', ')}
+            {[profil.district, profil.city || 'Casablanca'].filter(Boolean).join(', ')}
           </p>
         </div>
       </div>
@@ -201,14 +201,15 @@ export default function TableauBordArtisan({ profil, surMiseAJour }) {
   const [credit, setCredit] = useState({})
   const prenom = profil.full_name.trim().split(' ')[0]
   // Le fil dépend des métiers et de la disponibilité (RG05, RG12) : on le recharge s'ils changent
-  const cleFil = `${profil.trades.join(',')}|${profil.available_today}`
+  const cleFil = `${profil.city}|${profil.trades.join(',')}|${profil.available_today}`
 
   useEffect(() => {
     if (sansMetier) return
     let actif = true
-    chargerFilArtisan().then((r) => { if (actif) setFil(r) })
+    chargerFilArtisan(profil).then((r) => { if (actif) setFil(r) })
     return () => { actif = false }
-  }, [cleFil, sansMetier])
+    // Le profil change d'objet à chaque mise à jour : la clé suffit
+  }, [cleFil, sansMetier]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     chargerMesOffres(profil.id).then(({ offres: liste, erreur }) => setOffres({ liste: liste ?? [], erreur: erreur ?? null }))

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { Navigate } from 'react-router'
 import { PageMobile } from '../components/ui'
-import { accueilDe, obtenirProfil } from './auth'
+import { accueilDe, obtenirProfil, telephoneAVerifier } from './auth'
 import { supabase } from './supabase'
 
 const SessionContext = createContext({ utilisateur: null, profil: null, erreurProfil: null, aCompleter: false, chargement: true })
@@ -69,6 +69,7 @@ export function PageProtegee({ role, children }) {
   if (chargement) return null
   if (!utilisateur) return <Navigate to="/connexion" replace />
   if (aCompleter) return <Navigate to="/completer-profil" replace />
+  if (telephoneAVerifier(utilisateur)) return <Navigate to="/verification" replace />
   if (erreurProfil) return <ErreurProfil message={erreurProfil} />
   if (profil.role !== role) return <Navigate to={accueilDe(profil)} replace />
   return children
@@ -88,7 +89,18 @@ export function PageVisiteur({ children }) {
   const { utilisateur, profil, erreurProfil, aCompleter, chargement } = useSession()
   if (chargement) return null
   if (utilisateur && aCompleter) return <Navigate to="/completer-profil" replace />
+  if (utilisateur && telephoneAVerifier(utilisateur)) return <Navigate to="/verification" replace />
   if (utilisateur && erreurProfil) return <ErreurProfil message={erreurProfil} />
   if (utilisateur) return <Navigate to={accueilDe(profil)} replace />
   return children
+}
+
+// Écran du code simulé (US19) : seulement pour un compte connecté qui doit encore le saisir.
+export function PageVerification({ children }) {
+  const { utilisateur, profil, erreurProfil, chargement } = useSession()
+  if (chargement) return null
+  if (!utilisateur) return <Navigate to="/connexion" replace />
+  if (telephoneAVerifier(utilisateur)) return children
+  if (erreurProfil) return <ErreurProfil message={erreurProfil} />
+  return <Navigate to={accueilDe(profil)} replace />
 }

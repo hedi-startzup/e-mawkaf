@@ -19,3 +19,31 @@ export const ARRONDISSEMENTS_CASABLANCA = [
   'Sidi Moumen',
   'Sidi Othmane',
 ]
+
+// --- Villes (US17) ---
+// Les 6 grandes villes découpées en arrondissements ont leur liste ; les autres villes
+// n'ont pas d'arrondissements : seul le quartier (texte libre, facultatif) est demandé.
+// Listes à vérifier sur une source officielle avant la mise en ligne.
+export const ARRONDISSEMENTS_PAR_VILLE = {
+  Casablanca: ARRONDISSEMENTS_CASABLANCA,
+  Fès: ['Agdal', 'El Mariniyine', 'Fès-Médina', 'Jnan El Ouard', 'Saïss', 'Zouagha'],
+  Marrakech: ['Annakhil', 'Guéliz', 'Médina', 'Ménara', 'Sidi Youssef Ben Ali'],
+  Rabat: ['Agdal-Riyad', 'El Youssoufia', 'Hassan', 'Souissi', 'Yacoub El Mansour'],
+  Salé: ['Bab Lamrissa', 'Bettana', 'Hssaine', 'Layayda', 'Tabriquet'],
+  Tanger: ['Bni Makada', 'Charf-Mghogha', 'Charf-Souani', 'Tanger-Médina'],
+}
+
+// 20 villes : Casablanca d'abord (ville de lancement), puis les autres de A à Z
+export const VILLES = [
+  'Casablanca',
+  ...[
+    'Agadir', 'Béni Mellal', 'El Jadida', 'Fès', 'Kénitra', 'Khouribga', 'Marrakech', 'Meknès',
+    'Mohammédia', 'Nador', 'Oujda', 'Rabat', 'Safi', 'Salé', 'Settat', 'Tanger', 'Taza', 'Témara',
+    'Tétouan',
+  ].sort((a, b) => a.localeCompare(b, 'fr')),
+]
+
+// Arrondissements d'une ville ([] si la ville n'en a pas)
+export function arrondissementsDe(ville) {
+  return ARRONDISSEMENTS_PAR_VILLE[ville] ?? []
+}

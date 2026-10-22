@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ArrowLeft, CalendarDays, Check, Star, Sun } from 'lucide-react'
+import BoutonActualiser from '../components/BoutonActualiser'
+import Cloture from '../components/Cloture'
 import { Epingle, Etoile } from '../components/Marque'
 import MiseEnRelation from '../components/MiseEnRelation'
 import { libelleJour } from '../lib/dates'
 import { STATUTS_DEMANDE, chargerDetailDemande, choisirOffre, texteNote } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 import { STATUTS_OFFRE } from '../lib/offres'
+import { useSession } from '../lib/session'
+import { useTempsReel } from '../lib/tempsReel'
 
 function prenomDe(nomComplet) {
   return (nomComplet ?? '').trim().split(' ')[0] || 'Artisan'
@@ -146,7 +150,14 @@ export default function DetailDemande() {
 
   useEffect(() => { charger() }, [charger])
 
-  const { chargement, erreur, demande, offres } = etat
+  // US10 : la liste se met à jour seule quand une offre arrive, change ou est retirée
+  useTempsReel(`client-demande-${id}`, [
+    { table: 'offers', filter: `request_id=eq.${id}` },
+    { table: 'requests', filter: `id=eq.${id}` },
+  ], charger)
+
+  const { profil } = useSession()
+  const { chargement, erreur, demande, offres, maNote } = etat
   const choixPossible = demande?.status === 'ouverte'
   const offreChoisie = offres?.find((o) => o.status === 'acceptee')
 
@@ -176,10 +187,15 @@ export default function DetailDemande() {
             <MiseEnRelation idAutre={offreChoisie.artisan.id} role="client" demande={demande} prix={offreChoisie.price} />
           )}
 
+          {/* US12 : terminer l'intervention, puis noter l'artisan */}
+          <Cloture demande={demande} offreChoisie={offreChoisie} maNote={maNote} idClient={profil.id}
+            prenom={prenomDe(offreChoisie?.artisan.full_name)} surChangement={charger} />
+
           <h1 className="text-[28px] leading-tight">
             {offres.length === 0 ? 'Offres reçues' : `${offres.length} offre${offres.length > 1 ? 's' : ''} reçue${offres.length > 1 ? 's' : ''}`}
           </h1>
           {choixPossible && offres.length > 1 && <p className="-mt-3 text-muted">Du prix le plus bas au plus haut.</p>}
+          <BoutonActualiser onClick={charger} />
 
           {offres.length === 0 ? (
             <div className="flex flex-col items-center px-4 py-8 text-center">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AlertCircle, Check, ChevronDown, Save, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { ARRONDISSEMENTS_CASABLANCA } from '../lib/quartiers'
+import { VILLES, arrondissementsDe } from '../lib/quartiers'
 import { iconeMetier } from '../lib/icones'
 import { texteNote } from '../lib/demandes'
 import { Epingle } from '../components/Marque'
@@ -26,6 +26,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
   const [metiers, setMetiers] = useState([])
   const [chargementMetiers, setChargementMetiers] = useState(true)
   const [choisis, setChoisis] = useState(profil.trades)
+  const [ville, setVille] = useState(profil.city || 'Casablanca')
   const [arrondissement, setArrondissement] = useState(profil.district ?? '')
   const [quartier, setQuartier] = useState(profil.neighborhood ?? '')
   const [erreurs, setErreurs] = useState({})
@@ -78,7 +79,8 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
     if (choisis.length === 0) {
       nouvellesErreurs.metiers = 'Métiers : touchez au moins 1 métier (3 au maximum).'
     }
-    if (!arrondissement) {
+    // US17 : l'arrondissement n'est demandé que pour les villes qui en ont
+    if (!arrondissement && arrondissementsDe(ville).length > 0) {
       nouvellesErreurs.arrondissement = 'Arrondissement : choisissez-en un dans la liste.'
     }
     if (quartier.trim().length > QUARTIER_MAX) {
@@ -90,8 +92,8 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
     setEnvoi(true)
     const modifications = {
       trades: choisis,
-      city: 'Casablanca',
-      district: arrondissement,
+      city: ville,
+      district: arrondissement || null,
       neighborhood: quartier.trim() || null,
     }
     const { error } = await supabase.from('profiles').update(modifications).eq('id', profil.id)
@@ -130,7 +132,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
             </p>
             <p className="mt-0.5 flex items-center gap-1.5 text-muted">
               <Epingle className="h-5 w-4" />
-              {[profil.district, 'Casablanca'].filter(Boolean).join(', ')}
+              {[profil.district, profil.city || 'Casablanca'].filter(Boolean).join(', ')}
             </p>
           </div>
         </div>
@@ -221,26 +223,17 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
               <Epingle className="h-6 w-5" />
               Ville
             </span>
-            <input type="text" value="Casablanca" readOnly className="champ bg-gray-light text-muted" />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-2 font-bold">
-              <Epingle className="h-6 w-5" />
-              Arrondissement
-            </span>
             <span className="relative">
               <select
-                value={arrondissement}
-                aria-invalid={Boolean(erreurs.arrondissement)}
+                value={ville}
                 onChange={(e) => {
-                  setArrondissement(e.target.value)
+                  setVille(e.target.value)
+                  setArrondissement('') // la liste des arrondissements change avec la ville
                   setMessage('')
                 }}
                 className="champ appearance-none pr-11"
               >
-                <option value="">Choisir…</option>
-                {ARRONDISSEMENTS_CASABLANCA.map((nom) => (
+                {VILLES.map((nom) => (
                   <option key={nom} value={nom}>
                     {nom}
                   </option>
@@ -252,8 +245,40 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
                 aria-hidden="true"
               />
             </span>
-            <Erreur>{erreurs.arrondissement}</Erreur>
           </label>
+
+          {arrondissementsDe(ville).length > 0 && (
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 font-bold">
+                <Epingle className="h-6 w-5" />
+                Arrondissement
+              </span>
+              <span className="relative">
+                <select
+                  value={arrondissement}
+                  aria-invalid={Boolean(erreurs.arrondissement)}
+                  onChange={(e) => {
+                    setArrondissement(e.target.value)
+                    setMessage('')
+                  }}
+                  className="champ appearance-none pr-11"
+                >
+                  <option value="">Choisir…</option>
+                  {arrondissementsDe(ville).map((nom) => (
+                    <option key={nom} value={nom}>
+                      {nom}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand"
+                  strokeWidth={3}
+                  aria-hidden="true"
+                />
+              </span>
+              <Erreur>{erreurs.arrondissement}</Erreur>
+            </label>
+          )}
 
           <label className="flex flex-col gap-1.5">
             <span className="flex items-end justify-between gap-3">
