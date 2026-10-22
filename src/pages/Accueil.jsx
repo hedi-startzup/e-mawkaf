@@ -6,9 +6,9 @@ import { useSession } from '../lib/session'
 // Accueil de chaque rôle. Les stories suivantes le rempliront :
 // client → publier une demande (US05), artisan → fil des demandes (US07).
 export default function Accueil({ role }) {
-  const { utilisateur } = useSession()
+  const { profil } = useSession()
   const navigate = useNavigate()
-  const prenom = (utilisateur?.user_metadata?.full_name ?? '').split(' ')[0]
+  const prenom = (profil?.full_name ?? '').split(' ')[0]
 
   async function seDeconnecter() {
     await deconnecter()

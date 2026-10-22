@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { Bouton, Champ, MessageErreur, PageMobile, Titre } from '../components/ui'
-import { accueilDe, connecter } from '../lib/auth'
+import { connecter } from '../lib/auth'
 import { emailValide, telephoneValide } from '../lib/validation'
 
 export default function Connexion() {
-  const navigate = useNavigate()
   const [identifiant, setIdentifiant] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
   const [erreurs, setErreurs] = useState({})
@@ -25,10 +24,10 @@ export default function Connexion() {
     if (e.identifiant || e.motDePasse) return
 
     setEnvoi(true)
-    const { utilisateur, erreur } = await connecter({ identifiant, motDePasse })
+    const { erreur } = await connecter({ identifiant, motDePasse })
     setEnvoi(false)
-    if (erreur) return setErreurGenerale(erreur)
-    navigate(accueilDe(utilisateur), { replace: true })
+    // En cas de succès, PageVisiteur envoie vers l'accueil du rôle une fois le profil chargé
+    if (erreur) setErreurGenerale(erreur)
   }
 
   return (

@@ -1,9 +1,9 @@
 import { supabase } from './supabase'
 import { emailValide, nettoyerTelephone, telephoneInternational } from './validation'
 
-// En attendant les tables profiles et contacts (US02), le nom, le rôle et le
-// téléphone de contact sont rangés dans le compte Supabase (user_metadata).
-// Quand les tables existeront, ils y seront recopiés.
+// À l'inscription, le nom, le rôle et le téléphone sont rangés dans le compte
+// Supabase (user_metadata). Dès que l'utilisateur est connecté, obtenirProfil()
+// les recopie dans les tables profiles et contacts (US02) si ce n'est pas déjà fait.
 
 // Traduit les erreurs de Supabase : jamais de message technique brut à l'écran.
 function messageErreur(error) {
@@ -63,11 +63,43 @@ export async function deconnecter() {
   await supabase.auth.signOut()
 }
 
-// Rôle de l'utilisateur connecté : 'client' ou 'artisan' (RG01)
-export function roleDe(utilisateur) {
-  return utilisateur?.user_metadata?.role ?? null
+const COLONNES_PROFIL = 'id, role, full_name, city, district, neighborhood, trades, available_today'
+const DEJA_EXISTANT = '23505' // code Postgres : la ligne existe déjà
+
+// Renvoie le profil de l'utilisateur connecté. S'il n'existe pas encore
+// (juste après l'inscription, ou compte créé avant US02), il est créé, avec
+// son contact, à partir des informations rangées dans le compte.
+export async function obtenirProfil(utilisateur) {
+  const lecture = await supabase.from('profiles').select(COLONNES_PROFIL).eq('id', utilisateur.id).maybeSingle()
+  if (lecture.error) return { erreur: 'Impossible de charger ton profil. Recharge la page.' }
+  if (lecture.data) return { profil: lecture.data }
+
+  const infos = utilisateur.user_metadata ?? {}
+  if (!infos.role || !infos.full_name || !infos.phone) {
+    return { erreur: 'Ton compte est incomplet. Crée un nouveau compte ou contacte l\'équipe Mawkaf.' }
+  }
+
+  // Le rôle n'est choisi qu'ici, une seule fois : la base interdit de le modifier ensuite (RG01)
+  const profil = await supabase
+    .from('profiles')
+    .insert({ id: utilisateur.id, role: infos.role, full_name: infos.full_name })
+    .select(COLONNES_PROFIL)
+    .single()
+  if (profil.error && profil.error.code !== DEJA_EXISTANT) {
+    return { erreur: 'Impossible de créer ton profil. Recharge la page.' }
+  }
+
+  const contact = await supabase.from('contacts').insert({ user_id: utilisateur.id, phone: infos.phone })
+  if (contact.error && contact.error.code !== DEJA_EXISTANT) {
+    return { erreur: "Impossible d'enregistrer ton téléphone. Recharge la page." }
+  }
+
+  // Si une autre création a eu lieu en même temps, on relit le profil
+  if (profil.error) return obtenirProfil(utilisateur)
+  return { profil: profil.data }
 }
 
-export function accueilDe(utilisateur) {
-  return roleDe(utilisateur) === 'artisan' ? '/artisan' : '/client'
+// Accueil selon le rôle du profil (RG01)
+export function accueilDe(profil) {
+  return profil?.role === 'artisan' ? '/artisan' : '/client'
 }

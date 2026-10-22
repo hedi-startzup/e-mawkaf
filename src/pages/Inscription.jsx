@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { Bouton, Champ, Choix, MessageErreur, PageMobile, Titre } from '../components/ui'
-import { accueilDe, inscrire } from '../lib/auth'
+import { inscrire } from '../lib/auth'
 import { erreurEmail, erreurMotDePasse, erreurNom, erreurRole, erreurTelephone } from '../lib/validation'
 
 const ROLES = [
@@ -15,7 +15,6 @@ const MODES = [
 ]
 
 export default function Inscription() {
-  const navigate = useNavigate()
   const [form, setForm] = useState({
     role: '', modeIdentifiant: 'telephone', nom: '', email: '', telephone: '', motDePasse: '',
   })
@@ -45,10 +44,10 @@ export default function Inscription() {
     setErreurGenerale(null)
     if (!verifier()) return
     setEnvoi(true)
-    const { utilisateur, erreur } = await inscrire(form)
+    const { erreur } = await inscrire(form)
     setEnvoi(false)
-    if (erreur) return setErreurGenerale(erreur)
-    navigate(accueilDe(utilisateur), { replace: true })
+    // En cas de succès, la session crée le profil puis PageVisiteur envoie vers l'accueil du rôle
+    if (erreur) setErreurGenerale(erreur)
   }
 
   const parEmail = form.modeIdentifiant === 'email'
