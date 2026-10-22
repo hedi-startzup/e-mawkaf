@@ -1,6 +1,7 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ArrowRightLeft, ChevronDown, Search, ShieldCheck, ShieldHalf, UserSearch } from 'lucide-react'
+import { ArtisanMaison } from '../components/Illustrations'
 import { Logo, Zellige } from '../components/Marque'
 import { chargerMetiersDemande } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
@@ -92,20 +93,8 @@ export default function Bienvenue() {
             </p>
           </div>
 
-          {/* Illustration fournie par l'équipe (extraite de la maquette). Elle est petite : on l'affiche
-              à taille modérée, sur un disque crème, avec des bords estompés pour cacher la découpe. */}
-          <div className="relative mx-auto grid w-full max-w-[19rem] place-items-center md:max-w-[23rem]">
-            <span className="absolute inset-[6%] rounded-full bg-creme" aria-hidden="true" />
-            <span className="absolute inset-[18%] rounded-full bg-accent-light/60" aria-hidden="true" />
-            <img
-              src="/illustrations/artisan-accueil.png"
-              alt=""
-              width={555}
-              height={504}
-              className="relative w-[88%]"
-              style={{ maskImage: 'radial-gradient(ellipse 70% 72% at 50% 50%, #000 70%, transparent 100%)' }}
-            />
-          </div>
+          {/* Illustration dessinée en SVG : nette à toutes les tailles */}
+          <ArtisanMaison className="mx-auto w-full max-w-[19rem] md:max-w-[24rem]" />
         </section>
 
         <ul className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-card border border-line bg-white px-4 py-6 shadow-card md:grid-cols-4 md:py-5">

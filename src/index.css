@@ -22,6 +22,11 @@
   --color-sand-deep: #e6cf9f;
   --color-creme: #fdf8f1;
 
+  /* Couleurs des illustrations dessinées (src/components/Illustrations.jsx) uniquement */
+  --color-peau: #f3c9a5;
+  --color-peau-ombre: #e2a983;
+  --color-brand-soft: #4a68cf;
+
   --color-ok: #15803d;
   --color-ok-light: #e3f6e9;
   --color-danger: #b91c1c;
