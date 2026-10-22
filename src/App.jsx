@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-route
 import EspaceConnecte from './components/EspaceConnecte'
 import { PageProtegee, PageVisiteur, SessionProvider, useSession } from './lib/session'
 import Accueil from './pages/Accueil'
+import Bienvenue from './pages/Bienvenue'
 import Connexion from './pages/Connexion'
 import DemandeArtisan from './pages/DemandeArtisan'
 import DetailDemande from './pages/DetailDemande'
@@ -28,6 +29,7 @@ function App() {
     <SessionProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<PageVisiteur><Bienvenue /></PageVisiteur>} />
           <Route path="/connexion" element={<PageVisiteur><Connexion /></PageVisiteur>} />
           <Route path="/inscription" element={<PageVisiteur><Inscription /></PageVisiteur>} />
 
@@ -44,7 +46,7 @@ function App() {
             <Route path="/artisan/profil" element={<PageProfilArtisan />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/connexion" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </SessionProvider>

@@ -1,4 +1,5 @@
 // Éléments d'identité visuelle : logo, étoile marocaine décorative, épingle de lieu.
+import { Link } from 'react-router'
 
 // Logo : le symbole (sans texte) + le mot « Mawkaf » ajouté à côté (Règles visuelles).
 export function Logo({ grand = false }) {
@@ -67,7 +68,7 @@ export function CadreVisiteur({ children }) {
     <main className="min-h-screen w-full px-4 py-8 md:grid md:place-items-center md:py-12">
       <div className="mx-auto w-full max-w-md md:grid md:max-w-4xl md:grid-cols-2 md:overflow-hidden md:rounded-card md:border md:border-line md:bg-white md:shadow-card">
         <div className="flex flex-col gap-6 md:p-10">
-          <Logo />
+          <Link to="/" aria-label="Accueil Mawkaf" className="self-start"><Logo /></Link>
           {children}
         </div>
         <div className="relative hidden flex-col items-center justify-center overflow-hidden bg-sand p-10 text-center md:flex">

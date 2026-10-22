@@ -378,6 +378,10 @@ alter table public.credit_movements enable row level security;
 -- trades : lecture pour tout utilisateur connecté ; écriture par le tableau de bord seulement
 create policy trades_select on public.trades
   for select to authenticated using (true);
+-- Les visiteurs voient les métiers actifs sur la page d'accueil (migration 008)
+grant select on public.trades to anon;
+create policy trades_select_anon on public.trades
+  for select to anon using (is_active);
 
 -- profiles
 create policy profiles_select on public.profiles
