@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Banknote, MessageCircle, Phone } from 'lucide-react'
+import { Link } from 'react-router'
+import { Banknote, MessageCircle, MessagesSquare, Phone } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { libelleJour } from '../lib/dates'
 
@@ -74,11 +75,22 @@ export default function MiseEnRelation({ idAutre, role, demande, prix }) {
           href={`https://wa.me/${numeroWhatsApp(telephone)}?text=${encodeURIComponent(message)}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-ok px-6 text-lg font-bold text-white hover:opacity-90 active:scale-[0.98]"
+          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-ok px-6 text-lg font-bold text-white hover:opacity-90 active:scale-[0.98]"
         >
           <MessageCircle className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
           Écrire sur WhatsApp
         </a>
+      )}
+
+      {/* Messagerie Mawkaf (maquette n°8) : même règle que le téléphone, après attribution */}
+      {['attribuee', 'terminee'].includes(demande.status) && (
+        <Link
+          to={`/${role}/messages?demande=${demande.id}`}
+          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl border-2 border-brand bg-white px-6 text-lg font-bold text-brand hover:bg-brand-light active:scale-[0.98]"
+        >
+          <MessagesSquare className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+          {demande.status === 'terminee' ? 'Voir les messages' : 'Écrire un message'}
+        </Link>
       )}
 
       <div className="flex items-start gap-2 rounded-xl bg-white p-3">

@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { aujourdhuiCasablanca, demainCasablanca } from './dates'
 
 // Métiers proposés dans une demande : les 12 métiers actifs + « Autre » (RG03)
 export async function chargerMetiersDemande() {
@@ -168,4 +169,48 @@ export function texteNote(note) {
   if (!note) return null
   const moyenne = Number(note.average_score).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
   return `${moyenne} ★ (${note.ratings_count} avis)`
+}
+
+// --- Fil de l'artisan (US07) ---
+
+// Lit les demandes du fil, leurs métiers et le nombre d'offres reçues. Utilisé par le fil et le tableau de bord.
+// La base filtre déjà (RG05, RG12), mais elle laisse aussi l'artisan lire les demandes
+// sur lesquelles il a fait une offre (« Mes offres », US08) : on refait donc ici le filtre
+// du fil (ville, métiers + « Autre », jour, disponibilité) pour ne garder que les bonnes.
+export async function chargerFilArtisan(profil) {
+  const messageErreur = 'Impossible de charger les demandes. Rechargez la page.'
+
+  const [reponseDemandes, reponseMetiers] = await Promise.all([
+    supabase
+      .from('requests')
+      .select('id, trade, description, district, neighborhood, service_date, proposed_price, created_at')
+      .eq('status', 'ouverte')
+      .eq('city', profil.city)
+      .in('service_date', profil.available_today ? [aujourdhuiCasablanca(), demainCasablanca()] : [demainCasablanca()])
+      .order('created_at', { ascending: false }),
+    supabase.from('trades').select('id, label, icon, for_artisans'),
+  ])
+  if (reponseDemandes.error || reponseMetiers.error) return { demandes: [], erreur: messageErreur }
+
+  const metiers = Object.fromEntries(reponseMetiers.data.map((m) => [m.id, m]))
+  const demandes = reponseDemandes.data.filter(
+    (d) => profil.trades.includes(d.trade) || metiers[d.trade]?.for_artisans === false,
+  )
+  if (demandes.length === 0) return { demandes: [], erreur: '' }
+
+  const { data: comptes, error } = await supabase.rpc('nombre_offres', {
+    p_request_ids: demandes.map((d) => d.id),
+  })
+  if (error) return { demandes: [], erreur: messageErreur }
+
+  const nbOffres = Object.fromEntries(comptes.map((c) => [c.request_id, c.nb_offres]))
+
+  return {
+    demandes: demandes.map((d) => ({
+      ...d,
+      metier: metiers[d.trade] ?? { label: d.trade, icon: '' },
+      nbOffres: nbOffres[d.id] ?? 0,
+    })),
+    erreur: '',
+  }
 }

@@ -4,7 +4,9 @@
    (bg-brand, text-ink, border-line...). Voir « Règles visuelles » dans CLAUDE.md.
    brand : boutons principaux et titres. accent : mises en avant (pas pour du petit texte
    sur fond blanc, contraste trop faible). ok / danger : succès et erreurs.
-   sand / sand-deep : en-tête et motifs décoratifs (étoile marocaine). */
+   sand / sand-deep : pastilles de pictogrammes et motifs décoratifs (étoile marocaine).
+   Mise en page inspirée de la maquette (fond gris-bleu clair, cartes blanches),
+   avec la palette du logo à la place du bleu vif de la maquette. */
 @theme {
   /* Polices (Google Fonts, chargées dans index.html) : titres et texte très lisible */
   --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
@@ -16,21 +18,28 @@
   --color-brand-light: #e6ebf8;
   --color-accent: #d9652b;
   --color-sand: #f2e3c6;
+  --color-accent-light: #fbeadf;
   --color-sand-deep: #e6cf9f;
+  --color-creme: #fdf8f1;
+
+  /* Couleurs des illustrations dessinées (src/components/Illustrations.jsx) uniquement */
+  --color-peau: #f3c9a5;
+  --color-peau-ombre: #e2a983;
+  --color-brand-soft: #4a68cf;
 
   --color-ok: #15803d;
   --color-ok-light: #e3f6e9;
   --color-danger: #b91c1c;
   --color-ink: #1c1917;
-  --color-muted: #57534e;
-  --color-surface: #fafaf9;
-  --color-line: #e7e5e4;
-  --color-gray-light: #f2f1f0;
+  --color-muted: #5b6475;
+  --color-surface: #f5f7fb;
+  --color-line: #e4e8f0;
+  --color-gray-light: #eef1f6;
 
-  --radius-card: 1rem;
+  --radius-card: 0.875rem;
 
-  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.06);
-  --shadow-press: 0 6px 18px -8px rgb(31 63 168 / 0.55);
+  --shadow-card: 0 1px 2px rgb(23 47 126 / 0.04), 0 4px 16px -6px rgb(23 47 126 / 0.1);
+  --shadow-press: 0 4px 12px -6px rgb(31 63 168 / 0.5);
   --shadow-float: 0 -6px 24px -12px rgb(23 47 126 / 0.35);
 }
 
@@ -39,10 +48,10 @@
   height: 3rem;
   width: 100%;
   border-radius: 0.75rem;
-  border: 2px solid var(--color-line);
+  border: 1px solid var(--color-line);
   background-color: white;
   padding-inline: 0.875rem;
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   color: var(--color-ink);
   &:focus {
     outline: none;

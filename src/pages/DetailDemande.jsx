@@ -104,7 +104,7 @@ function CarteOffre({ offre, choixPossible, surChoisie }) {
         <button
           type="button"
           onClick={() => setConfirmation(true)}
-          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
         >
           <Check className="h-6 w-6" strokeWidth={3} aria-hidden="true" />
           Choisir cette offre
@@ -120,7 +120,7 @@ function CarteOffre({ offre, choixPossible, surChoisie }) {
               type="button"
               disabled={envoi}
               onClick={choisir}
-              className="min-h-12 rounded-full bg-brand px-4 font-bold text-white active:scale-[0.98] disabled:opacity-60"
+              className="min-h-12 rounded-xl bg-brand px-4 font-bold text-white active:scale-[0.98] disabled:opacity-60"
             >
               {envoi ? 'Choix…' : 'Oui, choisir'}
             </button>
@@ -128,7 +128,7 @@ function CarteOffre({ offre, choixPossible, surChoisie }) {
               type="button"
               disabled={envoi}
               onClick={() => { setConfirmation(false); setErreur(null) }}
-              className="min-h-12 rounded-full border-2 border-brand bg-white px-4 font-bold text-brand"
+              className="min-h-12 rounded-xl border-2 border-brand bg-white px-4 font-bold text-brand"
             >
               Non
             </button>

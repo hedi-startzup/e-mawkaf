@@ -1,7 +1,7 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { CalendarDays, ChevronRight, MessageSquareText, UserRound } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { CalendarDays, ChevronRight, MessageSquareText, Search, UserRound } from 'lucide-react'
+import { chargerFilArtisan } from '../lib/demandes'
 import { aujourdhuiCasablanca, demainCasablanca, libelleJour } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { Epingle, Etoile } from '../components/Marque'
@@ -17,11 +17,12 @@ export default function FilArtisan({ profil, allerAuProfil }) {
   const metiersCle = profil.trades.join(',')
   const cle = `${city}|${metiersCle}|${available_today}`
   const [resultat, setResultat] = useState({ cle: null, demandes: [], erreur: '' })
+  const [onglet, setOnglet] = useState('toutes')
 
   useEffect(() => {
     if (sansMetier) return
     let actif = true
-    chargerDemandes({ city, available_today, trades: metiersCle.split(',') }).then((r) => {
+    chargerFilArtisan({ city, available_today, trades: metiersCle.split(',') }).then((r) => {
       if (actif) setResultat({ cle, ...r })
     })
     return () => {
@@ -42,7 +43,7 @@ export default function FilArtisan({ profil, allerAuProfil }) {
           <button
             type="button"
             onClick={allerAuProfil}
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
           >
             <UserRound className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
             Compléter mon profil
@@ -53,17 +54,45 @@ export default function FilArtisan({ profil, allerAuProfil }) {
   }
 
   const chargement = resultat.cle !== cle
-  const { demandes, erreur } = resultat
+  const { erreur } = resultat
+  // Onglets de la maquette : filtre d'affichage seulement, la base filtre déjà (RG05, RG12)
+  const onglets = [
+    ['toutes', 'Toutes', null],
+    // RG12 : pas d'onglet « Aujourd'hui » pour un artisan qui n'est pas disponible aujourd'hui
+    ...(profil.available_today ? [['aujourdhui', "Aujourd'hui", aujourdhuiCasablanca()]] : []),
+    ['demain', 'Demain', demainCasablanca()],
+  ]
+  const jourFiltre = onglets.find(([id]) => id === onglet)?.[2]
+  const demandes = jourFiltre
+    ? resultat.demandes.filter((d) => d.service_date === jourFiltre)
+    : resultat.demandes
 
   return (
     <section className="flex flex-col gap-5">
       <div>
-        <h1 className="text-[28px] leading-tight">Mon fil</h1>
+        <h1 className="text-[28px] leading-tight">Demandes qui vous correspondent</h1>
         <p className="mt-1 text-muted">
           {profil.available_today
             ? 'Demandes pour aujourd’hui et demain.'
             : 'Vous n’êtes pas disponible aujourd’hui : demandes pour demain seulement.'}
         </p>
+      </div>
+
+      <div role="tablist" aria-label="Jour" className="flex gap-2 overflow-x-auto">
+        {onglets.map(([id, libelle]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={onglet === id}
+            onClick={() => setOnglet(id)}
+            className={`min-h-11 shrink-0 rounded-full px-5 font-bold ${
+              onglet === id ? 'bg-brand text-white shadow-press' : 'border border-line bg-white text-muted hover:text-ink'
+            }`}
+          >
+            {libelle}
+          </button>
+        ))}
       </div>
 
       {chargement && <p className="text-muted">Chargement des demandes…</p>}
@@ -75,13 +104,27 @@ export default function FilArtisan({ profil, allerAuProfil }) {
       )}
 
       {!chargement && !erreur && demandes.length === 0 && (
-        <div className="flex flex-col items-center px-4 py-10 text-center">
-          <Etoile className="mb-5 h-32 w-32 text-sand-deep" />
-          <p className="font-display text-[22px] font-bold text-brand">Aucune demande pour vous</p>
-          <p className="mt-2 text-muted">
-            Aucune demande ouverte ne correspond à vos métiers dans votre ville pour le moment.
-            Revenez un peu plus tard.
+        // État vide de la maquette (n°11)
+        <div className="flex flex-col items-center rounded-card border border-line bg-white px-4 py-10 text-center shadow-card">
+          <span className="relative mb-5 grid h-32 w-32 place-items-center">
+            <Etoile className="absolute inset-0 h-32 w-32 text-sand" />
+            <span className="relative grid h-16 w-16 place-items-center rounded-full bg-white text-brand shadow-card">
+              <Search className="h-8 w-8" strokeWidth={2.5} aria-hidden="true" />
+            </span>
+          </span>
+          <p className="font-display text-[22px] font-bold text-brand">Aucune demande correspondante</p>
+          <p className="mt-2 max-w-sm text-muted">
+            Vous n’avez pas de demande correspondant à vos métiers, votre ville ou vos disponibilités pour le moment.
           </p>
+          {onglet !== 'toutes' && (
+            <button
+              type="button"
+              onClick={() => setOnglet('toutes')}
+              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-brand px-6 font-bold text-white shadow-press hover:bg-brand-dark"
+            >
+              Voir toutes les demandes
+            </button>
+          )}
         </div>
       )}
 
@@ -98,48 +141,6 @@ export default function FilArtisan({ profil, allerAuProfil }) {
       )}
     </section>
   )
-}
-
-// Lit les demandes du fil, leurs métiers et le nombre d'offres reçues.
-// La base filtre déjà (RG05, RG12), mais elle laisse aussi l'artisan lire les demandes
-// sur lesquelles il a fait une offre (« Mes offres », US08) : on refait donc ici le filtre
-// du fil (ville, métiers + « Autre », jour, disponibilité) pour ne garder que les bonnes.
-async function chargerDemandes(profil) {
-  const messageErreur = 'Impossible de charger les demandes. Rechargez la page.'
-
-  const [reponseDemandes, reponseMetiers] = await Promise.all([
-    supabase
-      .from('requests')
-      .select('id, trade, description, district, neighborhood, service_date, proposed_price, created_at')
-      .eq('status', 'ouverte')
-      .eq('city', profil.city)
-      .in('service_date', profil.available_today ? [aujourdhuiCasablanca(), demainCasablanca()] : [demainCasablanca()])
-      .order('created_at', { ascending: false }),
-    supabase.from('trades').select('id, label, icon, for_artisans'),
-  ])
-  if (reponseDemandes.error || reponseMetiers.error) return { demandes: [], erreur: messageErreur }
-
-  const metiers = Object.fromEntries(reponseMetiers.data.map((m) => [m.id, m]))
-  const demandes = reponseDemandes.data.filter(
-    (d) => profil.trades.includes(d.trade) || metiers[d.trade]?.for_artisans === false,
-  )
-  if (demandes.length === 0) return { demandes: [], erreur: '' }
-
-  const { data: comptes, error } = await supabase.rpc('nombre_offres', {
-    p_request_ids: demandes.map((d) => d.id),
-  })
-  if (error) return { demandes: [], erreur: messageErreur }
-
-  const nbOffres = Object.fromEntries(comptes.map((c) => [c.request_id, c.nb_offres]))
-
-  return {
-    demandes: demandes.map((d) => ({
-      ...d,
-      metier: metiers[d.trade] ?? { label: d.trade, icon: '' },
-      nbOffres: nbOffres[d.id] ?? 0,
-    })),
-    erreur: '',
-  }
 }
 
 function CarteDemande({ demande }) {
