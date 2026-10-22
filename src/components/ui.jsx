@@ -5,8 +5,14 @@ export function PageMobile({ children }) {
   return <main className="mx-auto flex min-h-screen w-full max-w-md flex-col gap-6 px-4 py-8">{children}</main>
 }
 
-export function Titre({ children }) {
-  return <h1 className="text-[28px] leading-tight">{children}</h1>
+// Titre de page, avec un sous-titre gris facultatif (comme dans la maquette)
+export function Titre({ children, sousTitre }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <h1 className="text-[26px] leading-tight md:text-[28px]">{children}</h1>
+      {sousTitre && <p className="text-muted">{sousTitre}</p>}
+    </div>
+  )
 }
 
 export function Bouton({ children, variante = 'principal', className = '', ...props }) {
@@ -16,7 +22,7 @@ export function Bouton({ children, variante = 'principal', className = '', ...pr
   }
   return (
     <button
-      className={`min-h-14 w-full rounded-full px-6 text-lg font-bold active:scale-[0.98] disabled:opacity-60 ${styles[variante]} ${className}`}
+      className={`min-h-14 w-full rounded-xl px-6 text-lg font-bold active:scale-[0.98] disabled:opacity-60 ${styles[variante]} ${className}`}
       {...props}
     >
       {children}
@@ -48,7 +54,7 @@ export function Champ({ id, label, icone: Icone, erreur, aide, ...props }) {
 export function MessageErreur({ children }) {
   if (!children) return null
   return (
-    <p role="alert" className="rounded-card border-2 border-danger bg-white p-4 font-bold text-danger">
+    <p role="alert" className="rounded-xl border border-danger bg-white p-4 font-bold text-danger">
       {children}
     </p>
   )
@@ -58,7 +64,7 @@ export function MessageErreur({ children }) {
 export function Choix({ legende, options, valeur, onChange, erreur }) {
   return (
     <fieldset className="flex flex-col gap-1.5">
-      <legend className="mb-1.5 font-bold">{legende}</legend>
+      {legende && <legend className="mb-1.5 font-bold">{legende}</legend>}
       <div className="grid grid-cols-2 gap-3">
         {options.map(({ valeur: v, label, icone: Icone }) => {
           const choisi = v === valeur
@@ -68,13 +74,13 @@ export function Choix({ legende, options, valeur, onChange, erreur }) {
               type="button"
               aria-pressed={choisi}
               onClick={() => onChange(v)}
-              className={`flex min-h-14 flex-col items-center justify-center gap-2 rounded-card border-2 p-3 text-lg font-bold shadow-card ${
-                choisi ? 'border-brand bg-brand-light text-brand' : 'border-line bg-white text-ink'
+              className={`flex min-h-14 items-center justify-center gap-2.5 rounded-xl border p-3 text-lg font-bold transition-colors ${
+                choisi ? 'border-brand bg-brand text-white shadow-press' : 'border-line bg-white text-ink hover:border-brand'
               }`}
             >
               {Icone && (
-                <span className="grid h-12 w-12 place-items-center rounded-full bg-sand text-brand">
-                  <Icone className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${choisi ? 'bg-white/15 text-white' : 'bg-sand text-brand'}`}>
+                  <Icone className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                 </span>
               )}
               {label}

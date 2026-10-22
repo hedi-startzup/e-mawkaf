@@ -74,7 +74,7 @@ export default function MiseEnRelation({ idAutre, role, demande, prix }) {
           href={`https://wa.me/${numeroWhatsApp(telephone)}?text=${encodeURIComponent(message)}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-ok px-6 text-lg font-bold text-white hover:opacity-90 active:scale-[0.98]"
+          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-ok px-6 text-lg font-bold text-white hover:opacity-90 active:scale-[0.98]"
         >
           <MessageCircle className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
           Écrire sur WhatsApp

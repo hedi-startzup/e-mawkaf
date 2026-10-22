@@ -81,9 +81,9 @@ export default function PublierDemande() {
         <ArrowLeft className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         Mes demandes
       </Link>
-      <Titre>Publier une demande</Titre>
+      <Titre sousTitre="Décrivez votre besoin : les artisans de votre quartier vous feront leurs offres.">Publier une demande</Titre>
 
-      <form onSubmit={envoyer} noValidate className="flex flex-col gap-8">
+      <form onSubmit={envoyer} noValidate className="flex flex-col gap-8 md:rounded-card md:border md:border-line md:bg-white md:p-8 md:shadow-card">
         <div role="group" aria-labelledby="titre-metier" className="flex flex-col gap-3">
           <h2 id="titre-metier" className="text-xl">De quoi avez-vous besoin ?</h2>
           <MessageChamp>{erreurs.metier}</MessageChamp>

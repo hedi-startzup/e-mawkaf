@@ -32,7 +32,7 @@ function Annulation({ demande, surAnnulee }) {
       <button
         type="button"
         onClick={() => setConfirmation(true)}
-        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-danger bg-white px-5 font-bold text-danger hover:bg-gray-light"
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-danger bg-white px-5 font-bold text-danger hover:bg-gray-light"
       >
         <X className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         Annuler la demande
@@ -52,7 +52,7 @@ function Annulation({ demande, surAnnulee }) {
           type="button"
           disabled={envoi}
           onClick={annuler}
-          className="min-h-12 rounded-full bg-danger px-4 font-bold text-white active:scale-[0.98] disabled:opacity-60"
+          className="min-h-12 rounded-xl bg-danger px-4 font-bold text-white active:scale-[0.98] disabled:opacity-60"
         >
           {envoi ? 'Annulation…' : 'Oui, annuler'}
         </button>
@@ -60,7 +60,7 @@ function Annulation({ demande, surAnnulee }) {
           type="button"
           disabled={envoi}
           onClick={() => { setConfirmation(false); setErreur(null) }}
-          className="min-h-12 rounded-full border-2 border-brand bg-white px-4 font-bold text-brand hover:bg-brand-light"
+          className="min-h-12 rounded-xl border-2 border-brand bg-white px-4 font-bold text-brand hover:bg-brand-light"
         >
           Non, la garder
         </button>
@@ -106,7 +106,7 @@ function CarteDemande({ demande, surAnnulee }) {
       </div>
       <Link
         to={`/client/demandes/${demande.id}`}
-        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-brand px-5 font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
       >
         {demande.status === 'ouverte' ? `Voir les offres (${demande.nbOffres})` : 'Voir le détail'}
         <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
@@ -133,7 +133,10 @@ export default function Accueil() {
 
   return (
     <section className="flex flex-col gap-5">
-      <h1 className="text-[28px] leading-tight">Bonjour {prenom}</h1>
+      <div>
+        <h1 className="text-[28px] leading-tight">Bonjour {prenom}</h1>
+        <p className="mt-1 text-muted">Suivez vos demandes et les offres reçues.</p>
+      </div>
 
       {state?.demandePubliee && (
         <p role="status" className="flex items-center gap-1.5 rounded-xl bg-ok-light px-3 py-2 font-bold text-ok">
@@ -144,7 +147,7 @@ export default function Accueil() {
 
       <Link
         to="/client/publier"
-        className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] md:self-start"
+        className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] md:self-start"
       >
         <Plus className="h-6 w-6" strokeWidth={3} aria-hidden="true" />
         Publier une demande

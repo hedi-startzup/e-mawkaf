@@ -40,7 +40,7 @@ export default function FilArtisan({ profil, allerAuProfil }) {
           <button
             type="button"
             onClick={allerAuProfil}
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
           >
             <UserRound className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
             Compléter mon profil

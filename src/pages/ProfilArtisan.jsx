@@ -297,7 +297,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
           <button
             type="submit"
             disabled={envoi}
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60"
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60"
           >
             <Save className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
             {envoi ? 'Enregistrement…' : 'Enregistrer'}

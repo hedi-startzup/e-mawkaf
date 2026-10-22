@@ -59,3 +59,29 @@ export function Epingle({ className = '' }) {
     </svg>
   )
 }
+
+// Cadre des pages visiteur (connexion, inscription), comme la maquette : sur ordinateur, une carte
+// en deux colonnes avec le formulaire à gauche et un panneau sable avec le logo à droite.
+export function CadreVisiteur({ children }) {
+  return (
+    <main className="min-h-screen w-full px-4 py-8 md:grid md:place-items-center md:py-12">
+      <div className="mx-auto w-full max-w-md md:grid md:max-w-4xl md:grid-cols-2 md:overflow-hidden md:rounded-card md:border md:border-line md:bg-white md:shadow-card">
+        <div className="flex flex-col gap-6 md:p-10">
+          <Logo />
+          {children}
+        </div>
+        <div className="relative hidden flex-col items-center justify-center overflow-hidden bg-sand p-10 text-center md:flex">
+          <Filigrane className="-left-12 -top-12 h-40 w-40" />
+          <Filigrane className="-bottom-16 -right-14 h-48 w-48 opacity-50" />
+          <div className="relative">
+            <Logo grand />
+            <p className="mt-6 font-display text-xl font-bold text-ink">
+              Des artisans de confiance à Casablanca
+            </p>
+            <p className="mt-2 text-muted">Artisans à la journée · Prix en DH</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  )
+}
