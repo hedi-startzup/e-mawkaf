@@ -89,37 +89,41 @@ export function CadreVisiteur({ children }) {
   )
 }
 
-// Coin décoratif en zellige (maquette) : carreaux en escalier aux couleurs du logo,
-// dessiné en SVG pour rester net à toutes les tailles. Toujours décoratif, jamais derrière du texte.
-const COULEURS_ZELLIGE = ['fill-brand', 'fill-accent', 'fill-sand-deep', 'fill-brand-light', 'fill-accent', 'fill-brand']
+// Coin décoratif en zellige (maquette) : mosaïque de carreaux jointifs en escalier, aux couleurs
+// du logo, dessinée en SVG pour rester nette. Toujours décorative, jamais derrière du texte.
+// Chaque carreau : un fond, une étoile à 8 branches d'une autre couleur et un cœur blanc.
+const CARREAUX_ZELLIGE = [
+  ['fill-brand', 'fill-sand'],
+  ['fill-accent', 'fill-creme'],
+  ['fill-sand-deep', 'fill-brand'],
+  ['fill-brand-light', 'fill-accent'],
+  ['fill-brand-dark', 'fill-accent'],
+  ['fill-sand', 'fill-brand'],
+]
+const COTE = 6 // carreaux par côté du coin
 
 export function Zellige({ className = '' }) {
   const carreaux = []
-  for (let ligne = 0; ligne < 5; ligne++) {
-    for (let colonne = 0; colonne < 5; colonne++) {
-      // Escalier : plus de carreaux vers le coin haut droit
-      if (colonne < ligne) continue
-      const x = (4 - colonne) * 24
-      const y = ligne * 24
-      const couleur = COULEURS_ZELLIGE[(ligne * 2 + colonne) % COULEURS_ZELLIGE.length]
+  for (let ligne = 0; ligne < COTE; ligne++) {
+    for (let colonne = ligne; colonne < COTE; colonne++) {
+      // Escalier vers le coin haut droit ; les carreaux du bord s'estompent
+      const bord = COTE - 1 - colonne // 0 = carreau du bord en escalier
+      const [fond, etoile] = CARREAUX_ZELLIGE[(ligne * 3 + colonne * 2) % CARREAUX_ZELLIGE.length]
       carreaux.push(
-        (ligne + colonne) % 2 === 0 ? (
-          // Étoile à 8 branches
-          <path key={`${ligne}-${colonne}`} className={couleur}
-            transform={`translate(${x + 12} ${y + 12}) scale(0.2)`}
-            d="M-35 -35H35V35H-35Z M0 -49.5L49.5 0L0 49.5L-49.5 0Z" />
-        ) : (
-          // Losange et petit carré
-          <g key={`${ligne}-${colonne}`} transform={`translate(${x + 12} ${y + 12})`}>
-            <path className={couleur} d="M0 -10L10 0L0 10L-10 0Z" />
-            <rect x="-3" y="-3" width="6" height="6" className="fill-white" />
-          </g>
-        ),
+        <g
+          key={`${ligne}-${colonne}`}
+          transform={`translate(${(COTE - 1 - colonne + ligne) * 20 + 10} ${ligne * 20 + 10})`}
+          opacity={bord === 0 ? 0.45 : bord === 1 ? 0.75 : 1}
+        >
+          <rect x="-9.5" y="-9.5" width="19" height="19" rx="1.5" className={fond} />
+          <path transform="scale(0.15)" d="M-35 -35H35V35H-35Z M0 -49.5L49.5 0L0 49.5L-49.5 0Z" className={etoile} />
+          <circle r="2.2" className="fill-white" />
+        </g>,
       )
     }
   }
   return (
-    <svg viewBox="0 0 120 120" className={`pointer-events-none select-none ${className}`} aria-hidden="true">
+    <svg viewBox={`0 0 ${COTE * 20} ${COTE * 20}`} className={`pointer-events-none select-none ${className}`} aria-hidden="true">
       {carreaux}
     </svg>
   )
