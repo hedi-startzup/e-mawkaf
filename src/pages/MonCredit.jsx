@@ -26,7 +26,7 @@ function dateLisible(iso) {
 
 // « Mon crédit » (US15) : solde, historique et recharge simulée. Aucun argent réel (RG13).
 // Le crédit n'est jamais écrit par l'appli : la base le calcule (recharger_credit,
-// commission et remboursement automatiques, migration 008).
+// commission et remboursement automatiques, migration 010).
 export default function MonCredit() {
   const { profil } = useSession()
   const [etat, setEtat] = useState({ charge: false, solde: 0, mouvements: [], erreur: null })

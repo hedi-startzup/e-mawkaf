@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { CalendarDays, Check, ChevronRight, Inbox, Plus, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, ClipboardList, Handshake, Inbox, MessagesSquare, Plus, X } from 'lucide-react'
 import { Epingle, Etoile } from '../components/Marque'
 import { libelleJour } from '../lib/dates'
 import { STATUTS_DEMANDE, annulable, annulerDemande, chargerMesDemandes } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
+import { chargerConversations } from '../lib/messages'
 import { useSession } from '../lib/session'
+import { Tuile } from '../components/ui'
 
 // Texte du bouton vers le détail, selon l'étape de la demande
 function libelleLien(demande) {
@@ -40,7 +42,7 @@ function Annulation({ demande, surAnnulee }) {
       <button
         type="button"
         onClick={() => setConfirmation(true)}
-        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-danger bg-white px-5 font-bold text-danger hover:bg-gray-light"
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-danger bg-white px-5 font-bold text-danger hover:bg-gray-light"
       >
         <X className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         Annuler la demande
@@ -60,7 +62,7 @@ function Annulation({ demande, surAnnulee }) {
           type="button"
           disabled={envoi}
           onClick={annuler}
-          className="min-h-12 rounded-full bg-danger px-4 font-bold text-white active:scale-[0.98] disabled:opacity-60"
+          className="min-h-12 rounded-xl bg-danger px-4 font-bold text-white active:scale-[0.98] disabled:opacity-60"
         >
           {envoi ? 'Annulation…' : 'Oui, annuler'}
         </button>
@@ -68,7 +70,7 @@ function Annulation({ demande, surAnnulee }) {
           type="button"
           disabled={envoi}
           onClick={() => { setConfirmation(false); setErreur(null) }}
-          className="min-h-12 rounded-full border-2 border-brand bg-white px-4 font-bold text-brand hover:bg-brand-light"
+          className="min-h-12 rounded-xl border-2 border-brand bg-white px-4 font-bold text-brand hover:bg-brand-light"
         >
           Non, la garder
         </button>
@@ -114,7 +116,7 @@ function CarteDemande({ demande, surAnnulee }) {
       </div>
       <Link
         to={`/client/demandes/${demande.id}`}
-        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-brand px-5 font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
       >
         {libelleLien(demande)}
         <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
@@ -130,6 +132,7 @@ export default function Accueil() {
   const { state } = useLocation()
   const [demandes, setDemandes] = useState(null)
   const [erreur, setErreur] = useState(null)
+  const [nbConversations, setNbConversations] = useState(null)
   const prenom = (profil?.full_name ?? '').split(' ')[0]
 
   useEffect(() => {
@@ -139,9 +142,34 @@ export default function Accueil() {
     })
   }, [profil.id])
 
+  // Conversations en cours (demandes attribuées) : si le chargement échoue, la tuile affiche « – »
+  useEffect(() => {
+    chargerConversations(profil).then(({ conversations }) => {
+      if (conversations) setNbConversations(conversations.filter((c) => c.statut === 'attribuee').length)
+    })
+  }, [profil])
+
+  // Offres reçues : seulement sur les demandes encore ouvertes (celles où le client doit choisir)
+  const ouvertes = demandes?.filter((d) => d.status === 'ouverte')
+  const compteurs = [
+    [ClipboardList, 'Demandes ouvertes', ouvertes?.length],
+    [Inbox, 'Offres à comparer', ouvertes?.reduce((total, d) => total + d.nbOffres, 0)],
+    [Handshake, 'Artisans retenus', demandes?.filter((d) => d.status === 'attribuee').length],
+    [MessagesSquare, 'Conversations en cours', nbConversations],
+  ]
+
   return (
     <section className="flex flex-col gap-5">
-      <h1 className="text-[28px] leading-tight">Bonjour {prenom}</h1>
+      <div>
+        <h1 className="text-[28px] leading-tight">Bonjour {prenom}</h1>
+        <p className="mt-1 text-muted">Voici un aperçu de votre activité sur Mawkaf.</p>
+      </div>
+
+      <ul aria-label="Résumé" className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        {compteurs.map(([icone, libelle, valeur]) => (
+          <Tuile key={libelle} icone={icone} libelle={libelle} valeur={valeur} />
+        ))}
+      </ul>
 
       {state?.demandePubliee && (
         <p role="status" className="flex items-center gap-1.5 rounded-xl bg-ok-light px-3 py-2 font-bold text-ok">
@@ -152,7 +180,7 @@ export default function Accueil() {
 
       <Link
         to="/client/publier"
-        className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] md:self-start"
+        className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] md:self-start"
       >
         <Plus className="h-6 w-6" strokeWidth={3} aria-hidden="true" />
         Publier une demande

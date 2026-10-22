@@ -29,6 +29,8 @@ export async function inscrire({ modeIdentifiant, email, telephone, motDePasse, 
     full_name: nom.trim(),
     role,
     phone: nettoyerTelephone(telephone),
+    // US19 : une inscription par téléphone passe par l'écran de code simulé
+    ...(modeIdentifiant === 'telephone' && { telephone_a_verifier: true }),
   }
   const identifiant = modeIdentifiant === 'email'
     ? { email: email.trim().toLowerCase() }
@@ -59,6 +61,48 @@ export async function connecter({ identifiant, motDePasse }) {
   return { utilisateur: data.user }
 }
 
+// Connexion avec Google : Supabase renvoie ensuite vers l'appli. À la première connexion,
+// le compte n'a ni rôle ni téléphone : la session envoie vers « Compléter mon profil ».
+// La clé Google est réglée dans le tableau de bord Supabase, jamais dans le code.
+export async function connecterAvecGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  })
+  if (error) return { erreur: 'La connexion avec Google est indisponible pour le moment. Utilisez votre e-mail ou votre téléphone.' }
+  return {}
+}
+
+// Après une connexion Google : enregistre le rôle (RG01), le nom et le téléphone (RG02) dans le
+// compte, puis crée le profil et le contact exactement comme après une inscription (obtenirProfil).
+export async function completerProfil({ role, nom, telephone }) {
+  const { data, error } = await supabase.auth.updateUser({
+    data: { role, full_name: nom.trim(), phone: nettoyerTelephone(telephone) },
+  })
+  if (error) return { erreur: messageErreur(error) }
+  return obtenirProfil(data.user)
+}
+
+// --- Code de vérification simulé (US19) ---
+// Exercice de formation : aucun SMS ni message WhatsApp n'est envoyé, le code est fixe
+// et affiché à l'écran. Il ne protège rien ; le vrai code reste en feuille de route.
+export const CODE_SIMULE = '123456'
+
+// Seuls les comptes créés par téléphone depuis US19 portent cette étiquette
+export function telephoneAVerifier(utilisateur) {
+  return utilisateur?.user_metadata?.telephone_a_verifier === true
+}
+
+export async function validerCodeSimule(code) {
+  if (code.replace(/\s/g, '') !== CODE_SIMULE) {
+    return { erreur: 'Code incorrect. Vérifiez les 6 chiffres et réessayez.' }
+  }
+  // La session reçoit l'utilisateur mis à jour : l'écran de code laisse alors passer
+  const { error } = await supabase.auth.updateUser({ data: { telephone_a_verifier: false } })
+  if (error) return { erreur: 'La vérification a échoué. Vérifiez votre connexion et réessayez.' }
+  return {}
+}
+
 export async function deconnecter() {
   await supabase.auth.signOut()
 }
@@ -74,10 +118,9 @@ export async function obtenirProfil(utilisateur) {
   if (lecture.error) return { erreur: 'Impossible de charger votre profil. Rechargez la page.' }
   if (lecture.data) return { profil: lecture.data }
 
+  // Compte sans rôle ou sans téléphone (connexion Google) : l'utilisateur doit compléter son profil
   const infos = utilisateur.user_metadata ?? {}
-  if (!infos.role || !infos.full_name || !infos.phone) {
-    return { erreur: "Votre compte est incomplet. Créez un nouveau compte ou contactez l'équipe Mawkaf." }
-  }
+  if (!infos.role || !infos.full_name || !infos.phone) return { aCompleter: true }
 
   // Le rôle n'est choisi qu'ici, une seule fois : la base interdit de le modifier ensuite (RG01)
   const profil = await supabase
@@ -102,4 +145,40 @@ export async function obtenirProfil(utilisateur) {
 // Accueil selon le rôle du profil (RG01)
 export function accueilDe(profil) {
   return profil?.role === 'artisan' ? '/artisan' : '/client'
+}
+
+// --- Paramètres du compte (maquette n°9) ---
+
+// Téléphone de l'utilisateur connecté (la RLS de contacts autorise la lecture du sien)
+export async function chargerMonTelephone(idUtilisateur) {
+  const { data, error } = await supabase.from('contacts').select('phone').eq('user_id', idUtilisateur).maybeSingle()
+  if (error) return { erreur: 'Impossible de charger votre téléphone. Rechargez la page.' }
+  return { telephone: data?.phone ?? '' }
+}
+
+// Enregistre le nom (profiles) et, si fourni, le téléphone (contacts, RG02)
+export async function modifierCompte({ idUtilisateur, nom, telephone }) {
+  const profil = await supabase.from('profiles').update({ full_name: nom.trim() }).eq('id', idUtilisateur)
+  if (profil.error) return { erreur: "Votre nom n'a pas pu être enregistré. Réessayez dans un instant." }
+  if (telephone !== undefined) {
+    const contact = await supabase
+      .from('contacts')
+      .update({ phone: nettoyerTelephone(telephone) })
+      .eq('user_id', idUtilisateur)
+    if (contact.error) return { erreur: "Votre téléphone n'a pas pu être enregistré. Réessayez dans un instant." }
+  }
+  return {}
+}
+
+export async function changerMotDePasse(motDePasse) {
+  const { error } = await supabase.auth.updateUser({ password: motDePasse })
+  if (!error) return {}
+  const texte = (error.message ?? '').toLowerCase()
+  if (texte.includes('different from the old')) {
+    return { erreur: 'Nouveau mot de passe : il doit être différent de l’ancien.' }
+  }
+  if (texte.includes('reauthentication') || texte.includes('recent login')) {
+    return { erreur: 'Par sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.' }
+  }
+  return { erreur: messageErreur(error) }
 }

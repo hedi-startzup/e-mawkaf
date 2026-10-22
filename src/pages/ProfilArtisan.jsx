@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { AlertCircle, Check, ChevronDown, Save, Sun } from 'lucide-react'
+import { AlertCircle, Check, ChevronDown, Save, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { VILLES, arrondissementsDe } from '../lib/quartiers'
 import { iconeMetier } from '../lib/icones'
+import { texteNote } from '../lib/demandes'
 import { Epingle } from '../components/Marque'
+import Disponibilite from '../components/Disponibilite'
 
 const METIERS_MAX = 3
 const QUARTIER_MAX = 60
@@ -19,7 +21,7 @@ function Erreur({ children }) {
   )
 }
 
-// Profil de l'artisan (US04) : métiers (1 à 3, RG03), secteur, disponibilité (RG12).
+// Profil de l'artisan (US04) : métiers (1 à 3, RG03), secteur, disponibilité (RG12, composant Disponibilite).
 export default function ProfilArtisan({ profil, surMiseAJour }) {
   const [metiers, setMetiers] = useState([])
   const [chargementMetiers, setChargementMetiers] = useState(true)
@@ -30,7 +32,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
   const [erreurs, setErreurs] = useState({})
   const [message, setMessage] = useState('')
   const [envoi, setEnvoi] = useState(false)
-  const [erreurDispo, setErreurDispo] = useState('')
+  const [note, setNote] = useState(null)
 
   // Liste des métiers proposés aux artisans : jamais « Autre » (for_artisans = faux).
   useEffect(() => {
@@ -50,6 +52,16 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
       })
   }, [])
 
+  // Note de l'artisan (RG11) : moyenne et nombre d'avis, « Nouveau » s'il n'en a aucun
+  useEffect(() => {
+    supabase
+      .from('artisan_ratings')
+      .select('average_score, ratings_count')
+      .eq('artisan_id', profil.id)
+      .maybeSingle()
+      .then(({ data }) => setNote(data ?? null))
+  }, [profil.id])
+
   function basculerMetier(id) {
     setMessage('')
     setErreurs((actuelles) => ({ ...actuelles, metiers: undefined }))
@@ -58,21 +70,6 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
       if (actuels.length >= METIERS_MAX) return actuels
       return [...actuels, id]
     })
-  }
-
-  // RG12 : enregistré dès qu'on touche l'interrupteur, sans passer par « Enregistrer ».
-  async function basculerDisponibilite() {
-    const nouvelleValeur = !profil.available_today
-    setErreurDispo('')
-    surMiseAJour({ ...profil, available_today: nouvelleValeur })
-    const { error } = await supabase
-      .from('profiles')
-      .update({ available_today: nouvelleValeur })
-      .eq('id', profil.id)
-    if (error) {
-      surMiseAJour({ ...profil, available_today: !nouvelleValeur })
-      setErreurDispo("Votre disponibilité n'a pas pu être enregistrée. Réessayez.")
-    }
   }
 
   async function enregistrer(e) {
@@ -114,51 +111,51 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
 
   return (
     <section className="flex flex-col gap-8 md:mx-auto md:w-full md:max-w-2xl">
-      <div>
-        <h1 className="text-[28px] leading-tight">Mon profil</h1>
-        <p className="mt-1 text-muted">{profil.full_name}</p>
+      <h1 className="text-[28px] leading-tight">Mon profil</h1>
+
+      {/* Carte d'en-tête du profil (maquette n°7) : ce que voit un client */}
+      <div className="flex flex-col gap-4 rounded-card border border-line bg-white p-5 shadow-card">
+        <div className="flex items-center gap-4">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-brand font-display text-2xl font-bold text-white" aria-hidden="true">
+            {profil.full_name.trim().charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate font-display text-xl font-bold text-brand">{profil.full_name}</p>
+              {dispo && (
+                <span className="rounded-full bg-ok-light px-2.5 py-0.5 text-sm font-bold text-ok">Disponible</span>
+              )}
+            </div>
+            <p className="mt-1 inline-flex items-center gap-1.5 font-bold">
+              <Star className="h-5 w-5 fill-accent text-accent" strokeWidth={2} aria-hidden="true" />
+              {texteNote(note)?.replace(' ★', '') ?? 'Nouveau'}
+            </p>
+            <p className="mt-0.5 flex items-center gap-1.5 text-muted">
+              <Epingle className="h-5 w-4" />
+              {[profil.district, profil.city || 'Casablanca'].filter(Boolean).join(', ')}
+            </p>
+          </div>
+        </div>
+        {profil.trades.length > 0 && (
+          <ul aria-label="Mes métiers enregistrés" className="flex flex-wrap gap-2">
+            {profil.trades.map((id) => {
+              const metier = metiers.find((m) => m.id === id)
+              if (!metier) return null
+              const Icone = iconeMetier(metier.icon)
+              return (
+                <li key={id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface py-1 pl-1 pr-3 font-bold">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-sand text-brand">
+                    <Icone className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+                  </span>
+                  {metier.label}
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={dispo}
-          onClick={basculerDisponibilite}
-          className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-colors ${
-            dispo ? 'border-ok bg-ok-light' : 'border-line bg-white'
-          }`}
-        >
-          <span
-            className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${
-              dispo ? 'bg-white text-ok' : 'bg-sand text-brand'
-            }`}
-          >
-            <Sun className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-lg font-bold">Disponible aujourd'hui</span>
-            <span className={`block text-sm ${dispo ? 'font-bold text-ok' : 'text-muted'}`}>
-              {dispo
-                ? 'Oui : vous voyez les demandes pour aujourd’hui et demain.'
-                : 'Non : vous ne voyez que les demandes pour demain.'}
-            </span>
-          </span>
-          <span
-            aria-hidden="true"
-            className={`relative h-9 w-16 shrink-0 rounded-full transition-colors ${
-              dispo ? 'bg-ok' : 'bg-line'
-            }`}
-          >
-            <span
-              className={`absolute top-1 h-7 w-7 rounded-full bg-white shadow transition-all ${
-                dispo ? 'left-8' : 'left-1'
-              }`}
-            />
-          </span>
-        </button>
-        <Erreur>{erreurDispo}</Erreur>
-      </div>
+      <Disponibilite profil={profil} surMiseAJour={surMiseAJour} />
 
       <form onSubmit={enregistrer} className="flex flex-col gap-8" noValidate>
         <div role="group" aria-labelledby="titre-metiers" className="flex flex-col gap-3">
@@ -322,7 +319,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
           <button
             type="submit"
             disabled={envoi}
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60"
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60"
           >
             <Save className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
             {envoi ? 'Enregistrement…' : 'Enregistrer'}

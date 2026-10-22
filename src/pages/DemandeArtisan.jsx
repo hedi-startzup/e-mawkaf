@@ -1,6 +1,7 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ArrowLeft, Banknote, CalendarDays, Check, MessageSquareText, Pencil, Send, Undo2, X } from 'lucide-react'
+import BoutonActualiser from '../components/BoutonActualiser'
 import { Epingle } from '../components/Marque'
 import MiseEnRelation from '../components/MiseEnRelation'
 import { Bouton, Champ, MessageErreur } from '../components/ui'
@@ -8,6 +9,7 @@ import { libelleJour } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { STATUTS_OFFRE, chargerDemandeEtMonOffre, envoyerOffre, retirerOffre } from '../lib/offres'
 import { useSession } from '../lib/session'
+import { useTempsReel } from '../lib/tempsReel'
 import { MESSAGE_OFFRE_MAX, erreurMessageOffre, erreurPrixOffre } from '../lib/validation'
 
 // Page d'une demande côté artisan (US08) : accepter le prix du client,
@@ -28,12 +30,19 @@ export default function DemandeArtisan() {
     }
   }, [id, profil.id, version])
 
-  const chargement = etat.id !== `${id}|${version}`
+  // US10 : l'artisan voit son offre passer en « Acceptée » ou « Refusée » sans recharger
+  useTempsReel(`artisan-demande-${id}`, [
+    { table: 'offers', filter: `request_id=eq.${id}` },
+    { table: 'requests', filter: `id=eq.${id}` },
+  ], () => setVersion((v) => v + 1))
+
+  // Pendant un rechargement, on garde l'écran affiché (pas de « Chargement… » à chaque mise à jour)
+  const chargement = !etat.id?.startsWith(`${id}|`)
   const { demande, offre, erreur } = etat
 
   return (
     <section className="flex flex-col gap-6 md:mx-auto md:w-full md:max-w-2xl">
-      <Link to="/artisan" className="inline-flex min-h-12 items-center gap-2 self-start font-bold text-brand">
+      <Link to="/artisan/fil" className="inline-flex min-h-12 items-center gap-2 self-start font-bold text-brand">
         <ArrowLeft className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         Mon fil
       </Link>
@@ -43,6 +52,7 @@ export default function DemandeArtisan() {
       {!chargement && demande && (
         <>
           <Resume demande={demande} />
+          <BoutonActualiser onClick={() => setVersion((v) => v + 1)} />
           <Offre
             key={`${offre?.id ?? 'nouvelle'}|${offre?.status}|${offre?.updated_at}`}
             demande={demande}

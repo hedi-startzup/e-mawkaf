@@ -20,7 +20,7 @@ Source de vérité fonctionnelle : le dossier « Projet 1 · Mawkaf — dossier 
 1. **Une branche par story**, nommée avec la vraie clé Jira : `MAW-11-publier-demande` (US05). Les clés sont décalées de 6 par rapport aux numéros : US01 = MAW-7, US14 = MAW-20.
 2. **Jamais de commit direct sur `main`.** Pull request liée au ticket, relue par l'autre développeur, puis fusion.
 3. **Commencer chaque story en mode Plan**, à partir du texte du ticket, et attendre la validation du plan avant de modifier des fichiers.
-4. **Secrets** : jamais de clé, mot de passe ou jeton dans le code, dans le chat, dans un commit ou dans `.mcp.json`. Variables d'environnement uniquement (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). `.env` est dans `.gitignore` : ne jamais l'ouvrir, l'afficher, le modifier ni le committer. Ne jamais utiliser la clé `service_role` dans le code du navigateur.
+4. **Secrets** : jamais de clé, mot de passe ou jeton dans le code, dans le chat, dans un commit ou dans `.mcp.json`. Variables d'environnement uniquement (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). `.env` est dans `.gitignore` : ne jamais l'ouvrir, l'afficher, le modifier ni le committer. Ne jamais utiliser la clé `service_role` dans le code du navigateur. Les identifiants OAuth Google se règlent uniquement dans le tableau de bord Supabase.
 5. Une story est terminée quand : critères d'acceptation vérifiés, PR relue et fusionnée, fonctionnalité qui marche sur le lien de démo.
 6. Ne pas ajouter de fonctionnalité hors de la story en cours. Les idées hors périmètre vont dans la feuille de route, pas dans le code.
 7. Quand tu fais la même erreur deux fois, proposer une ligne à ajouter à ce fichier (relue par l'autre développeur).
@@ -66,22 +66,23 @@ Artisan : renseigne ses métiers → voit les demandes qui le concernent → acc
 Contraintes de saisie : description de demande 10 à 300 caractères ; message d'offre 140 caractères au plus ; jour de la demande = aujourd'hui ou demain.
 
 ## Modèle de données (Supabase)
-Sept tables. RLS activée sur chacune.
+Huit tables. RLS activée sur chacune.
 
 | Table | Colonnes principales | Lecture | Écriture |
 |---|---|---|---|
 | `profiles` | id (= compte Supabase), role, full_name, city, district, trades (liste), available_today, credit_balance (DH entier, peut être négatif en simulation), created_at | tout utilisateur connecté | chacun son profil |
 | `contacts` | user_id, phone | soi-même, et l'autre partie d'une demande attribuée ou terminée | soi-même |
-| `trades` | id, label, icon, is_active, sort_order, for_artisans (faux pour « Autre ») | tout utilisateur connecté | administrateur (tableau de bord Supabase) |
+| `trades` | id, label, icon, is_active, sort_order, for_artisans (faux pour « Autre ») | tout utilisateur connecté ; visiteurs pour les métiers actifs (page d'accueil, migration 008) | administrateur (tableau de bord Supabase) |
 | `requests` | id, client_id, trade, description, city, district, service_date, proposed_price (nullable), status, accepted_offer_id, created_at | client auteur ; artisans pour les demandes ouvertes qui les concernent ; artisan retenu | client auteur |
 | `offers` | id, request_id, artisan_id, price, message, status, created_at, updated_at ; une seule offre par artisan et par demande | artisan auteur ; client de la demande | artisan auteur, tant que la demande est ouverte |
 | `ratings` | id, request_id (unique), artisan_id, client_id, score 1–5, comment, created_at | tout utilisateur connecté | client d'une demande terminée, une fois |
+| `messages` | id, request_id, sender_id, body (1 à 500 caractères), created_at | client et artisan retenu d'une demande attribuée ou terminée | les mêmes, seulement tant que la demande est attribuée ; jamais modifié ni supprimé |
 | `credit_movements` | id, artisan_id, request_id, amount, kind (`recharge_simulee`, `commission`, `remboursement`), created_at | artisan concerné | écrit par `choisir_offre` et par l'annulation, jamais par l'interface |
 
 Éléments techniques à créer dès US02 :
 - Fonction SQL `choisir_offre(offer_id)` : fait en une seule fois les trois mises à jour de RG07, après avoir vérifié que l'appelant est bien le client de la demande.
 - Vue `artisan_ratings` : moyenne et nombre d'avis par artisan (RG11).
-- Realtime activé sur `offers` et `requests` (pour US10). Solution de repli : bouton « Actualiser ».
+- Realtime activé sur `offers` et `requests` (pour US10), et sur `messages`. Solution de repli : bouton « Actualiser ».
 - Le script SQL complet est versionné dans `supabase/schema.sql`.
 - Tester les règles RLS avec de vrais comptes de test (client A, client B, artisan 1, artisan 2) : aucun utilisateur ne doit pouvoir lire un téléphone hors de RG08 en interrogeant directement la base.
 
@@ -92,8 +93,9 @@ Sept tables. RLS activée sur chacune.
 
 ## Périmètre
 - **Lot 1 (garanti)** : US01 à US14, plus inscription téléphone/e-mail, table `trades`, demande « Autre » / devis, pictogrammes, interface en français, US15 (simulation de crédit et de commission 14 %).
+- **Ajouts validés par Hedi le 22/10/2026 (MAW-28, maquette)** : page d'accueil publique, tableau de bord client, demande en 3 étapes, Paramètres (nom, téléphone, mot de passe), connexion Google avec « Compléter mon profil », messagerie entre le client et l'artisan retenu après attribution (même règle que RG08).
 - **Lot 2 (seulement si la vélocité le permet)** : US16 tarif indicatif, US17 autres villes, US18 PWA, US19 code de vérification simulé.
-- **Lot 3 (feuille de route, ne pas coder)** : photos, note vocale, messagerie, négociation multi-tours ou directe, interface d'administration, litiges, calendrier façon Planity, carte/géolocalisation, darija/arabe, application native, notifications push, vrai paiement/portefeuille, vérification d'identité, vrai code SMS/WhatsApp.
+- **Lot 3 (feuille de route, ne pas coder)** : photos, note vocale, messagerie avant attribution, négociation multi-tours ou directe, interface d'administration, litiges, calendrier façon Planity, carte/géolocalisation, darija/arabe, application native, notifications push, vrai paiement/portefeuille, vérification d'identité, vrai code SMS/WhatsApp.
 
 ## Points à confirmer (ne pas trancher seul)
 - Les demandes « Autre » sont-elles visibles par tous les artisans de la ville ? (hypothèse actuelle : oui.)

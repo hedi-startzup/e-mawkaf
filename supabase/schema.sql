@@ -378,6 +378,10 @@ alter table public.credit_movements enable row level security;
 -- trades : lecture pour tout utilisateur connecté ; écriture par le tableau de bord seulement
 create policy trades_select on public.trades
   for select to authenticated using (true);
+-- Les visiteurs voient les métiers actifs sur la page d'accueil (migration 008)
+grant select on public.trades to anon;
+create policy trades_select_anon on public.trades
+  for select to anon using (is_active);
 
 -- profiles
 create policy profiles_select on public.profiles
@@ -548,7 +552,7 @@ revoke all on function public.nombre_offres(uuid[]) from public, anon;
 grant execute on function public.nombre_offres(uuid[]) to authenticated;
 
 -- ---------------------------------------------------------------------
--- 7 ter. Crédit simulé : recharge et commission (US15, migration 008)
+-- 7 ter. Crédit simulé : recharge et commission (US15, migration 010)
 -- ---------------------------------------------------------------------
 -- Recharge simulée (US15) : 100, 200 ou 500 DH, par l'artisan connecté, sans argent réel.
 -- Le crédit ne s'écrit jamais depuis l'appli : seule cette fonction l'augmente.
@@ -647,5 +651,73 @@ insert into public.trades (id, label, icon, sort_order, for_artisans) values
   ('electromenager', 'Électroménager',             'refrigerator',    11, true),
   ('demenagement',   'Déménagement et manutention','truck',           12, true),
   ('autre',          'Autre',                      'circle-help',     99, false);
+
+
+-- ---------------------------------------------------------------------
+-- 10. Messagerie client / artisan retenu (migration 009, maquette n°8)
+--     Même règle que le téléphone (RG08) : après attribution seulement ;
+--     écriture tant que la demande est attribuée, lecture seule une fois terminée.
+-- ---------------------------------------------------------------------
+create table public.messages (
+  id         uuid primary key default gen_random_uuid(),
+  request_id uuid not null references public.requests (id) on delete cascade,
+  sender_id  uuid not null references public.profiles (id) on delete cascade,
+  body       text not null check (char_length(btrim(body)) between 1 and 500),
+  created_at timestamptz not null default now()
+);
+
+create index messages_request_idx on public.messages (request_id, created_at);
+
+-- L'utilisateur connecté est-il le client ou l'artisan retenu d'une demande attribuée ou terminée ?
+create or replace function private.can_read_messages(p_request_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.requests r
+    join public.offers o on o.id = r.accepted_offer_id
+    where r.id = p_request_id
+      and r.status in ('attribuee', 'terminee')
+      and (r.client_id = (select auth.uid()) or o.artisan_id = (select auth.uid()))
+  );
+$$;
+
+-- Même chose, mais seulement tant que la demande est attribuée
+create or replace function private.can_write_messages(p_request_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.requests r
+    join public.offers o on o.id = r.accepted_offer_id
+    where r.id = p_request_id
+      and r.status = 'attribuee'
+      and (r.client_id = (select auth.uid()) or o.artisan_id = (select auth.uid()))
+  );
+$$;
+
+revoke all on function private.can_read_messages(uuid), private.can_write_messages(uuid) from public;
+grant execute on function private.can_read_messages(uuid), private.can_write_messages(uuid) to authenticated;
+
+-- Droits : lecture et envoi seulement ; aucun message ne se modifie ni ne se supprime
+revoke all on public.messages from anon, authenticated;
+grant select on public.messages to authenticated;
+grant insert (request_id, sender_id, body) on public.messages to authenticated;
+
+alter table public.messages enable row level security;
+
+create policy messages_select on public.messages
+  for select to authenticated
+  using (private.can_read_messages(request_id));
+create policy messages_insert on public.messages
+  for insert to authenticated
+  with check (sender_id = (select auth.uid()) and private.can_write_messages(request_id));
+
+-- Realtime : les nouveaux messages s'affichent sans recharger (la RLS s'applique aussi au Realtime)
+alter publication supabase_realtime add table public.messages;
 
 commit;

@@ -1,17 +1,20 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { CalendarDays, ChevronRight } from 'lucide-react'
+import BoutonActualiser from '../components/BoutonActualiser'
 import { Epingle, Etoile } from '../components/Marque'
 import { MessageErreur } from '../components/ui'
 import { libelleJour } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { STATUTS_OFFRE, chargerMesOffres } from '../lib/offres'
 import { useSession } from '../lib/session'
+import { useTempsReel } from '../lib/tempsReel'
 
 // « Mes offres » (US08) : toutes les offres de l'artisan, avec leur statut.
 export default function MesOffres() {
   const { profil } = useSession()
   const [etat, setEtat] = useState({ charge: false, offres: [], erreur: null })
+  const [version, setVersion] = useState(0) // +1 = recharger
 
   useEffect(() => {
     let actif = true
@@ -21,13 +24,19 @@ export default function MesOffres() {
     return () => {
       actif = false
     }
-  }, [profil.id])
+  }, [profil.id, version])
+
+  // US10 : les statuts (acceptée, refusée) se mettent à jour sans recharger
+  useTempsReel(`mes-offres-${profil.id}`, [{ table: 'offers', filter: `artisan_id=eq.${profil.id}` }], () =>
+    setVersion((v) => v + 1),
+  )
 
   const { charge, offres, erreur } = etat
 
   return (
     <section className="flex flex-col gap-5">
       <h1 className="text-[28px] leading-tight">Mes offres</h1>
+      <BoutonActualiser onClick={() => setVersion((v) => v + 1)} />
 
       {!charge && <p className="text-muted">Chargement…</p>}
       <MessageErreur>{erreur}</MessageErreur>
