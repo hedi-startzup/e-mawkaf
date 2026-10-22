@@ -14,12 +14,18 @@ import Messages from './pages/Messages'
 import Parametres from './pages/Parametres'
 import ProfilArtisan from './pages/ProfilArtisan'
 import PublierDemande from './pages/PublierDemande'
+import TableauBordArtisan from './pages/TableauBordArtisan'
 
 // Les pages artisan reçoivent le profil de la session (US04).
 function PageFilArtisan() {
   const { profil } = useSession()
   const navigate = useNavigate()
   return <FilArtisan profil={profil} allerAuProfil={() => navigate('/artisan/profil')} />
+}
+
+function PageTableauBordArtisan() {
+  const { profil, mettreAJourProfil } = useSession()
+  return <TableauBordArtisan profil={profil} surMiseAJour={mettreAJourProfil} />
 }
 
 function PageProfilArtisan() {
@@ -46,7 +52,8 @@ function App() {
           </Route>
 
           <Route element={<PageProtegee role="artisan"><EspaceConnecte artisan /></PageProtegee>}>
-            <Route path="/artisan" element={<PageFilArtisan />} />
+            <Route path="/artisan" element={<PageTableauBordArtisan />} />
+            <Route path="/artisan/fil" element={<PageFilArtisan />} />
             <Route path="/artisan/demandes/:id" element={<DemandeArtisan />} />
             <Route path="/artisan/offres" element={<MesOffres />} />
             <Route path="/artisan/profil" element={<PageProfilArtisan />} />

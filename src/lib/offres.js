@@ -68,3 +68,26 @@ export async function chargerMesOffres(idArtisan) {
   if (error) return { erreur: 'Impossible de charger vos offres. Rechargez la page.' }
   return { offres: data }
 }
+
+// --- Crédit simulé de l'artisan (US15, RG13 : simulation, aucun argent réel) ---
+
+export const TYPES_MOUVEMENT = {
+  recharge_simulee: 'Recharge simulée',
+  commission: 'Commission (14 %)',
+  remboursement: 'Remboursement',
+}
+
+// Solde (profiles.credit_balance) et derniers mouvements (la RLS ne renvoie que ceux de l'artisan)
+export async function chargerCredit(idArtisan) {
+  const [solde, mouvements] = await Promise.all([
+    supabase.from('profiles').select('credit_balance').eq('id', idArtisan).maybeSingle(),
+    supabase
+      .from('credit_movements')
+      .select('id, amount, kind, created_at')
+      .eq('artisan_id', idArtisan)
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ])
+  if (solde.error || mouvements.error) return { erreur: 'Impossible de charger votre crédit. Rechargez la page.' }
+  return { solde: solde.data?.credit_balance ?? 0, mouvements: mouvements.data }
+}

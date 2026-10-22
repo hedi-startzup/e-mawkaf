@@ -14,10 +14,11 @@ const NAVIGATION = {
     ['/client/parametres', 'Paramètres', Settings, { mobile: false }],
   ],
   artisan: [
-    ['/artisan', 'Mon fil', Inbox],
+    ['/artisan', 'Tableau de bord', House],
+    ['/artisan/fil', 'Mon fil', Inbox],
     ['/artisan/offres', 'Mes offres', HandCoins],
     ['/artisan/messages', 'Messages', MessagesSquare],
-    ['/artisan/profil', 'Mon profil', UserRound],
+    ['/artisan/profil', 'Mon profil', UserRound, { mobile: false }],
     ['/artisan/parametres', 'Paramètres', Settings, { mobile: false }],
   ],
 }

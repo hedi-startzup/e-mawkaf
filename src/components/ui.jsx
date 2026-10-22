@@ -142,3 +142,16 @@ export function Choix({ legende, options, valeur, onChange, erreur }) {
     </fieldset>
   )
 }
+
+// Compteur des tableaux de bord client et artisan (maquette n°4)
+export function Tuile({ icone: Icone, libelle, valeur }) {
+  return (
+    <li className="flex flex-col gap-2 rounded-card border border-line bg-white p-4 shadow-card">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-light text-brand">
+        <Icone className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+      </span>
+      <span className="text-sm font-bold leading-tight text-muted">{libelle}</span>
+      <span className="font-display text-[26px] font-bold leading-none text-ink tabular-nums">{valeur ?? '–'}</span>
+    </li>
+  )
+}

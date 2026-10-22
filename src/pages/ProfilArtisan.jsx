@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { AlertCircle, Check, ChevronDown, Save, Star, Sun } from 'lucide-react'
+import { AlertCircle, Check, ChevronDown, Save, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { ARRONDISSEMENTS_CASABLANCA } from '../lib/quartiers'
 import { iconeMetier } from '../lib/icones'
 import { texteNote } from '../lib/demandes'
 import { Epingle } from '../components/Marque'
+import Disponibilite from '../components/Disponibilite'
 
 const METIERS_MAX = 3
 const QUARTIER_MAX = 60
@@ -20,7 +21,7 @@ function Erreur({ children }) {
   )
 }
 
-// Profil de l'artisan (US04) : métiers (1 à 3, RG03), secteur, disponibilité (RG12).
+// Profil de l'artisan (US04) : métiers (1 à 3, RG03), secteur, disponibilité (RG12, composant Disponibilite).
 export default function ProfilArtisan({ profil, surMiseAJour }) {
   const [metiers, setMetiers] = useState([])
   const [chargementMetiers, setChargementMetiers] = useState(true)
@@ -30,7 +31,6 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
   const [erreurs, setErreurs] = useState({})
   const [message, setMessage] = useState('')
   const [envoi, setEnvoi] = useState(false)
-  const [erreurDispo, setErreurDispo] = useState('')
   const [note, setNote] = useState(null)
 
   // Liste des métiers proposés aux artisans : jamais « Autre » (for_artisans = faux).
@@ -69,21 +69,6 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
       if (actuels.length >= METIERS_MAX) return actuels
       return [...actuels, id]
     })
-  }
-
-  // RG12 : enregistré dès qu'on touche l'interrupteur, sans passer par « Enregistrer ».
-  async function basculerDisponibilite() {
-    const nouvelleValeur = !profil.available_today
-    setErreurDispo('')
-    surMiseAJour({ ...profil, available_today: nouvelleValeur })
-    const { error } = await supabase
-      .from('profiles')
-      .update({ available_today: nouvelleValeur })
-      .eq('id', profil.id)
-    if (error) {
-      surMiseAJour({ ...profil, available_today: !nouvelleValeur })
-      setErreurDispo("Votre disponibilité n'a pas pu être enregistrée. Réessayez.")
-    }
   }
 
   async function enregistrer(e) {
@@ -168,46 +153,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={dispo}
-          onClick={basculerDisponibilite}
-          className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-colors ${
-            dispo ? 'border-ok bg-ok-light' : 'border-line bg-white'
-          }`}
-        >
-          <span
-            className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${
-              dispo ? 'bg-white text-ok' : 'bg-sand text-brand'
-            }`}
-          >
-            <Sun className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-lg font-bold">Disponible aujourd'hui</span>
-            <span className={`block text-sm ${dispo ? 'font-bold text-ok' : 'text-muted'}`}>
-              {dispo
-                ? 'Oui : vous voyez les demandes pour aujourd’hui et demain.'
-                : 'Non : vous ne voyez que les demandes pour demain.'}
-            </span>
-          </span>
-          <span
-            aria-hidden="true"
-            className={`relative h-9 w-16 shrink-0 rounded-full transition-colors ${
-              dispo ? 'bg-ok' : 'bg-line'
-            }`}
-          >
-            <span
-              className={`absolute top-1 h-7 w-7 rounded-full bg-white shadow transition-all ${
-                dispo ? 'left-8' : 'left-1'
-              }`}
-            />
-          </span>
-        </button>
-        <Erreur>{erreurDispo}</Erreur>
-      </div>
+      <Disponibilite profil={profil} surMiseAJour={surMiseAJour} />
 
       <form onSubmit={enregistrer} className="flex flex-col gap-8" noValidate>
         <div role="group" aria-labelledby="titre-metiers" className="flex flex-col gap-3">

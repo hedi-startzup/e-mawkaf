@@ -7,6 +7,7 @@ import { STATUTS_DEMANDE, annulable, annulerDemande, chargerMesDemandes } from '
 import { iconeMetier } from '../lib/icones'
 import { chargerConversations } from '../lib/messages'
 import { useSession } from '../lib/session'
+import { Tuile } from '../components/ui'
 
 function texteOffres(nb) {
   if (nb === 0) return 'Aucune offre pour l’instant'
@@ -113,19 +114,6 @@ function CarteDemande({ demande, surAnnulee }) {
         <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
       </Link>
       {annulable(demande) && <Annulation demande={demande} surAnnulee={surAnnulee} />}
-    </li>
-  )
-}
-
-// Compteur du tableau de bord (maquette n°4)
-function Tuile({ icone: Icone, libelle, valeur }) {
-  return (
-    <li className="flex flex-col gap-2 rounded-card border border-line bg-white p-4 shadow-card">
-      <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-light text-brand">
-        <Icone className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
-      </span>
-      <span className="text-sm font-bold leading-tight text-muted">{libelle}</span>
-      <span className="font-display text-[26px] font-bold leading-none text-ink tabular-nums">{valeur ?? '–'}</span>
     </li>
   )
 }

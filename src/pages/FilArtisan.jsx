@@ -1,7 +1,7 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { CalendarDays, ChevronRight, MessageSquareText, Search, UserRound } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { chargerFilArtisan } from '../lib/demandes'
 import { aujourdhuiCasablanca, demainCasablanca, libelleJour } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { Epingle, Etoile } from '../components/Marque'
@@ -20,7 +20,7 @@ export default function FilArtisan({ profil, allerAuProfil }) {
   useEffect(() => {
     if (sansMetier) return
     let actif = true
-    chargerDemandes().then((r) => {
+    chargerFilArtisan().then((r) => {
       if (actif) setResultat({ cle, ...r })
     })
     return () => {
@@ -139,41 +139,6 @@ export default function FilArtisan({ profil, allerAuProfil }) {
       )}
     </section>
   )
-}
-
-// Lit les demandes visibles, leurs métiers et le nombre d'offres reçues.
-async function chargerDemandes() {
-  const messageErreur = 'Impossible de charger les demandes. Rechargez la page.'
-
-  const [reponseDemandes, reponseMetiers] = await Promise.all([
-    supabase
-      .from('requests')
-      .select('id, trade, description, district, neighborhood, service_date, proposed_price, created_at')
-      .eq('status', 'ouverte')
-      .order('created_at', { ascending: false }),
-    supabase.from('trades').select('id, label, icon'),
-  ])
-  if (reponseDemandes.error || reponseMetiers.error) return { demandes: [], erreur: messageErreur }
-
-  const demandes = reponseDemandes.data
-  if (demandes.length === 0) return { demandes: [], erreur: '' }
-
-  const { data: comptes, error } = await supabase.rpc('nombre_offres', {
-    p_request_ids: demandes.map((d) => d.id),
-  })
-  if (error) return { demandes: [], erreur: messageErreur }
-
-  const metiers = Object.fromEntries(reponseMetiers.data.map((m) => [m.id, m]))
-  const nbOffres = Object.fromEntries(comptes.map((c) => [c.request_id, c.nb_offres]))
-
-  return {
-    demandes: demandes.map((d) => ({
-      ...d,
-      metier: metiers[d.trade] ?? { label: d.trade, icon: '' },
-      nbOffres: nbOffres[d.id] ?? 0,
-    })),
-    erreur: '',
-  }
 }
 
 function CarteDemande({ demande }) {
