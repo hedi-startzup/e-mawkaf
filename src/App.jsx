@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
 import EspaceConnecte from './components/EspaceConnecte'
-import { PageProtegee, PageVisiteur, SessionProvider, useSession } from './lib/session'
+import { PageProtegee, PageVerification, PageVisiteur, SessionProvider, useSession } from './lib/session'
 import Accueil from './pages/Accueil'
 import Connexion from './pages/Connexion'
 import DemandeArtisan from './pages/DemandeArtisan'
@@ -10,6 +10,7 @@ import Inscription from './pages/Inscription'
 import MesOffres from './pages/MesOffres'
 import ProfilArtisan from './pages/ProfilArtisan'
 import PublierDemande from './pages/PublierDemande'
+import VerificationTelephone from './pages/VerificationTelephone'
 
 // Les pages artisan reçoivent le profil de la session (US04).
 function PageFilArtisan() {
@@ -30,6 +31,7 @@ function App() {
         <Routes>
           <Route path="/connexion" element={<PageVisiteur><Connexion /></PageVisiteur>} />
           <Route path="/inscription" element={<PageVisiteur><Inscription /></PageVisiteur>} />
+          <Route path="/verification" element={<PageVerification><VerificationTelephone /></PageVerification>} />
 
           <Route element={<PageProtegee role="client"><EspaceConnecte /></PageProtegee>}>
             <Route path="/client" element={<Accueil />} />
