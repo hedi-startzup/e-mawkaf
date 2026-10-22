@@ -6,6 +6,7 @@ import Connexion from './pages/Connexion'
 import FilArtisan from './pages/FilArtisan'
 import Inscription from './pages/Inscription'
 import ProfilArtisan from './pages/ProfilArtisan'
+import PublierDemande from './pages/PublierDemande'
 
 // Les pages artisan reçoivent le profil de la session (US04).
 function PageFilArtisan() {
@@ -29,6 +30,7 @@ function App() {
 
           <Route element={<PageProtegee role="client"><EspaceConnecte /></PageProtegee>}>
             <Route path="/client" element={<Accueil />} />
+            <Route path="/client/publier" element={<PublierDemande />} />
           </Route>
 
           <Route element={<PageProtegee role="artisan"><EspaceConnecte artisan /></PageProtegee>}>

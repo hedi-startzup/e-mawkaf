@@ -48,3 +48,45 @@ export function erreurRole(role) {
   if (role !== 'client' && role !== 'artisan') return 'Choisissez « Je suis client » ou « Je suis artisan ».'
   return null
 }
+
+// --- Demandes (US05) ---
+
+export const DESCRIPTION_MIN = 10
+export const DESCRIPTION_MAX = 300
+export const QUARTIER_MAX = 60
+export const PRIX_MIN = 50
+export const PRIX_MAX = 5000
+
+export function erreurMetier(metier) {
+  if (!metier) return 'Métier : touchez le métier qui correspond à votre besoin (ou « Autre »).'
+  return null
+}
+
+export function erreurDescription(description) {
+  const longueur = description.trim().length
+  if (longueur < DESCRIPTION_MIN) {
+    return `Description : décrivez votre besoin en ${DESCRIPTION_MIN} caractères au moins. Exemple : « Fuite sous l'évier de la cuisine ».`
+  }
+  if (longueur > DESCRIPTION_MAX) return `Description : ${DESCRIPTION_MAX} caractères au maximum.`
+  return null
+}
+
+export function erreurArrondissement(arrondissement) {
+  if (!arrondissement) return 'Arrondissement : choisissez-en un dans la liste.'
+  return null
+}
+
+export function erreurQuartier(quartier) {
+  if (quartier.trim().length > QUARTIER_MAX) return `Quartier : ${QUARTIER_MAX} caractères au maximum.`
+  return null
+}
+
+// RG04 : prix facultatif pour une demande, entier entre 50 et 5 000 DH
+export function erreurPrixFacultatif(prix) {
+  const valeur = prix.trim()
+  if (!valeur) return null
+  if (!/^\d+$/.test(valeur) || Number(valeur) < PRIX_MIN || Number(valeur) > PRIX_MAX) {
+    return `Prix : un nombre entier entre ${PRIX_MIN} et ${PRIX_MAX} DH, sans centimes. Ou laissez vide pour demander un devis.`
+  }
+  return null
+}
