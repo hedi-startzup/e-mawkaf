@@ -76,7 +76,7 @@ export default function PublierDemande() {
   const devis = !form.prix.trim()
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="flex flex-col gap-6 md:mx-auto md:w-full md:max-w-2xl">
       <Link to="/client" className="inline-flex min-h-12 items-center gap-2 self-start font-bold text-brand">
         <ArrowLeft className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         Mes demandes
