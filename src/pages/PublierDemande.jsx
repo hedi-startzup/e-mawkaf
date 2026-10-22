@@ -6,7 +6,7 @@ import { Bouton, Champ, Choix, MessageErreur, Titre } from '../components/ui'
 import { aujourdhuiCasablanca, demainCasablanca } from '../lib/dates'
 import { chargerMetiersDemande, publierDemande } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
-import { ARRONDISSEMENTS_CASABLANCA } from '../lib/quartiers'
+import { VILLES, arrondissementsDe } from '../lib/quartiers'
 import { useSession } from '../lib/session'
 import {
   DESCRIPTION_MAX, QUARTIER_MAX, erreurArrondissement, erreurDescription, erreurMetier,
@@ -30,7 +30,7 @@ export default function PublierDemande() {
   const [metiers, setMetiers] = useState([])
   const [erreurMetiers, setErreurMetiers] = useState(null)
   const [form, setForm] = useState({
-    metier: '', description: '', arrondissement: '', quartier: '', jour: 'aujourdhui', prix: '',
+    metier: '', description: '', ville: profil.city || 'Casablanca', arrondissement: '', quartier: '', jour: 'aujourdhui', prix: '',
   })
   const [erreurs, setErreurs] = useState({})
   const [erreurGenerale, setErreurGenerale] = useState(null)
@@ -54,7 +54,8 @@ export default function PublierDemande() {
     const e = {
       metier: erreurMetier(form.metier),
       description: erreurDescription(form.description),
-      arrondissement: erreurArrondissement(form.arrondissement),
+      // US17 : l'arrondissement n'est demandé que pour les villes qui en ont
+      arrondissement: arrondissementsDe(form.ville).length > 0 ? erreurArrondissement(form.arrondissement) : null,
       quartier: erreurQuartier(form.quartier),
       prix: erreurPrixFacultatif(form.prix),
     }
@@ -140,24 +141,35 @@ export default function PublierDemande() {
           <h2 className="text-xl">Où ?</h2>
           <label className="flex flex-col gap-1.5">
             <span className="flex items-center gap-2 font-bold"><Epingle className="h-6 w-5" />Ville</span>
-            <input type="text" value="Casablanca" readOnly className="champ bg-gray-light text-muted" />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-2 font-bold"><Epingle className="h-6 w-5" />Arrondissement</span>
             <span className="relative">
               <select
-                value={form.arrondissement}
-                aria-invalid={Boolean(erreurs.arrondissement)}
-                onChange={(e) => changer('arrondissement', e.target.value)}
+                value={form.ville}
+                onChange={(e) => setForm((f) => ({ ...f, ville: e.target.value, arrondissement: '' }))}
                 className="champ appearance-none pr-11"
               >
-                <option value="">Choisir…</option>
-                {ARRONDISSEMENTS_CASABLANCA.map((nom) => <option key={nom} value={nom}>{nom}</option>)}
+                {VILLES.map((nom) => <option key={nom} value={nom}>{nom}</option>)}
               </select>
               <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand" strokeWidth={3} aria-hidden="true" />
             </span>
-            <MessageChamp>{erreurs.arrondissement}</MessageChamp>
           </label>
+          {arrondissementsDe(form.ville).length > 0 && (
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 font-bold"><Epingle className="h-6 w-5" />Arrondissement</span>
+              <span className="relative">
+                <select
+                  value={form.arrondissement}
+                  aria-invalid={Boolean(erreurs.arrondissement)}
+                  onChange={(e) => changer('arrondissement', e.target.value)}
+                  className="champ appearance-none pr-11"
+                >
+                  <option value="">Choisir…</option>
+                  {arrondissementsDe(form.ville).map((nom) => <option key={nom} value={nom}>{nom}</option>)}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand" strokeWidth={3} aria-hidden="true" />
+              </span>
+              <MessageChamp>{erreurs.arrondissement}</MessageChamp>
+            </label>
+          )}
           <Champ id="quartier" label="Quartier (facultatif)" maxLength={QUARTIER_MAX} placeholder="Exemple : Racine"
             value={form.quartier} onChange={(e) => changer('quartier', e.target.value)} erreur={erreurs.quartier} />
         </div>

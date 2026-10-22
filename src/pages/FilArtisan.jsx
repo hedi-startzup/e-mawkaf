@@ -2,7 +2,7 @@ import { createElement, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { CalendarDays, ChevronRight, MessageSquareText, UserRound } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { libelleJour } from '../lib/dates'
+import { aujourdhuiCasablanca, demainCasablanca, libelleJour } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { Epingle, Etoile } from '../components/Marque'
 
@@ -12,20 +12,22 @@ import { Epingle, Etoile } from '../components/Marque'
 // aujourd'hui ou demain, disponibilité) est fait par la base : RLS de requests (RG05, RG12).
 export default function FilArtisan({ profil, allerAuProfil }) {
   const sansMetier = profil.trades.length === 0
-  // Recharger le fil quand les métiers ou la disponibilité changent
-  const cle = `${profil.trades.join(',')}|${profil.available_today}`
+  // Recharger le fil quand la ville, les métiers ou la disponibilité changent
+  const { city, available_today } = profil
+  const metiersCle = profil.trades.join(',')
+  const cle = `${city}|${metiersCle}|${available_today}`
   const [resultat, setResultat] = useState({ cle: null, demandes: [], erreur: '' })
 
   useEffect(() => {
     if (sansMetier) return
     let actif = true
-    chargerDemandes().then((r) => {
+    chargerDemandes({ city, available_today, trades: metiersCle.split(',') }).then((r) => {
       if (actif) setResultat({ cle, ...r })
     })
     return () => {
       actif = false
     }
-  }, [cle, sansMetier])
+  }, [cle, sansMetier, city, available_today, metiersCle])
 
   if (sansMetier) {
     return (
@@ -98,8 +100,11 @@ export default function FilArtisan({ profil, allerAuProfil }) {
   )
 }
 
-// Lit les demandes visibles, leurs métiers et le nombre d'offres reçues.
-async function chargerDemandes() {
+// Lit les demandes du fil, leurs métiers et le nombre d'offres reçues.
+// La base filtre déjà (RG05, RG12), mais elle laisse aussi l'artisan lire les demandes
+// sur lesquelles il a fait une offre (« Mes offres », US08) : on refait donc ici le filtre
+// du fil (ville, métiers + « Autre », jour, disponibilité) pour ne garder que les bonnes.
+async function chargerDemandes(profil) {
   const messageErreur = 'Impossible de charger les demandes. Rechargez la page.'
 
   const [reponseDemandes, reponseMetiers] = await Promise.all([
@@ -107,12 +112,17 @@ async function chargerDemandes() {
       .from('requests')
       .select('id, trade, description, district, neighborhood, service_date, proposed_price, created_at')
       .eq('status', 'ouverte')
+      .eq('city', profil.city)
+      .in('service_date', profil.available_today ? [aujourdhuiCasablanca(), demainCasablanca()] : [demainCasablanca()])
       .order('created_at', { ascending: false }),
-    supabase.from('trades').select('id, label, icon'),
+    supabase.from('trades').select('id, label, icon, for_artisans'),
   ])
   if (reponseDemandes.error || reponseMetiers.error) return { demandes: [], erreur: messageErreur }
 
-  const demandes = reponseDemandes.data
+  const metiers = Object.fromEntries(reponseMetiers.data.map((m) => [m.id, m]))
+  const demandes = reponseDemandes.data.filter(
+    (d) => profil.trades.includes(d.trade) || metiers[d.trade]?.for_artisans === false,
+  )
   if (demandes.length === 0) return { demandes: [], erreur: '' }
 
   const { data: comptes, error } = await supabase.rpc('nombre_offres', {
@@ -120,7 +130,6 @@ async function chargerDemandes() {
   })
   if (error) return { demandes: [], erreur: messageErreur }
 
-  const metiers = Object.fromEntries(reponseMetiers.data.map((m) => [m.id, m]))
   const nbOffres = Object.fromEntries(comptes.map((c) => [c.request_id, c.nb_offres]))
 
   return {
