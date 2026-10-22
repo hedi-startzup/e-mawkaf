@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ArrowLeft, CalendarDays, Check, Star, Sun } from 'lucide-react'
+import Cloture from '../components/Cloture'
 import { Epingle, Etoile } from '../components/Marque'
 import { libelleJour } from '../lib/dates'
 import { STATUTS_DEMANDE, chargerDetailDemande, choisirOffre, texteNote } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 import { STATUTS_OFFRE } from '../lib/offres'
+import { useSession } from '../lib/session'
 
 function prenomDe(nomComplet) {
   return (nomComplet ?? '').trim().split(' ')[0] || 'Artisan'
@@ -145,7 +147,8 @@ export default function DetailDemande() {
 
   useEffect(() => { charger() }, [charger])
 
-  const { chargement, erreur, demande, offres } = etat
+  const { profil } = useSession()
+  const { chargement, erreur, demande, offres, maNote } = etat
   const choixPossible = demande?.status === 'ouverte'
   const offreChoisie = offres?.find((o) => o.status === 'acceptee')
 
@@ -169,6 +172,9 @@ export default function DetailDemande() {
               Vous avez choisi {prenomDe(offreChoisie.artisan.full_name)} à {offreChoisie.price} DH.
             </p>
           )}
+
+          <Cloture demande={demande} offreChoisie={offreChoisie} maNote={maNote} idClient={profil.id}
+            prenom={prenomDe(offreChoisie?.artisan.full_name)} surChangement={charger} />
 
           <h1 className="text-[28px] leading-tight">
             {offres.length === 0 ? 'Offres reçues' : `${offres.length} offre${offres.length > 1 ? 's' : ''} reçue${offres.length > 1 ? 's' : ''}`}

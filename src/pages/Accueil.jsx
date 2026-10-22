@@ -7,6 +7,14 @@ import { STATUTS_DEMANDE, annulable, annulerDemande, chargerMesDemandes } from '
 import { iconeMetier } from '../lib/icones'
 import { useSession } from '../lib/session'
 
+// Texte du bouton vers le détail, selon l'étape de la demande
+function libelleLien(demande) {
+  if (demande.status === 'ouverte') return `Voir les offres (${demande.nbOffres})`
+  if (demande.status === 'attribuee') return 'Intervention terminée ?'
+  if (demande.status === 'terminee' && !demande.notee) return "Noter l'artisan"
+  return 'Voir le détail'
+}
+
 function texteOffres(nb) {
   if (nb === 0) return 'Aucune offre pour l’instant'
   return nb === 1 ? '1 offre reçue' : `${nb} offres reçues`
@@ -108,7 +116,7 @@ function CarteDemande({ demande, surAnnulee }) {
         to={`/client/demandes/${demande.id}`}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-brand px-5 font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
       >
-        {demande.status === 'ouverte' ? `Voir les offres (${demande.nbOffres})` : 'Voir le détail'}
+        {libelleLien(demande)}
         <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
       </Link>
       {annulable(demande) && <Annulation demande={demande} surAnnulee={surAnnulee} />}
