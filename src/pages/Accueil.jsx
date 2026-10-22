@@ -144,7 +144,7 @@ export default function Accueil() {
 
       <Link
         to="/client/publier"
-        className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+        className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98] md:self-start"
       >
         <Plus className="h-6 w-6" strokeWidth={3} aria-hidden="true" />
         Publier une demande
@@ -161,7 +161,7 @@ export default function Accueil() {
         </div>
       )}
       {demandes?.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid gap-3 md:grid-cols-2 md:gap-4">
           {demandes.map((demande) => (
             <CarteDemande
               key={demande.id}
