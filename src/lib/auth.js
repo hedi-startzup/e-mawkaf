@@ -103,3 +103,39 @@ export async function obtenirProfil(utilisateur) {
 export function accueilDe(profil) {
   return profil?.role === 'artisan' ? '/artisan' : '/client'
 }
+
+// --- Paramètres du compte (maquette n°9) ---
+
+// Téléphone de l'utilisateur connecté (la RLS de contacts autorise la lecture du sien)
+export async function chargerMonTelephone(idUtilisateur) {
+  const { data, error } = await supabase.from('contacts').select('phone').eq('user_id', idUtilisateur).maybeSingle()
+  if (error) return { erreur: 'Impossible de charger votre téléphone. Rechargez la page.' }
+  return { telephone: data?.phone ?? '' }
+}
+
+// Enregistre le nom (profiles) et, si fourni, le téléphone (contacts, RG02)
+export async function modifierCompte({ idUtilisateur, nom, telephone }) {
+  const profil = await supabase.from('profiles').update({ full_name: nom.trim() }).eq('id', idUtilisateur)
+  if (profil.error) return { erreur: "Votre nom n'a pas pu être enregistré. Réessayez dans un instant." }
+  if (telephone !== undefined) {
+    const contact = await supabase
+      .from('contacts')
+      .update({ phone: nettoyerTelephone(telephone) })
+      .eq('user_id', idUtilisateur)
+    if (contact.error) return { erreur: "Votre téléphone n'a pas pu être enregistré. Réessayez dans un instant." }
+  }
+  return {}
+}
+
+export async function changerMotDePasse(motDePasse) {
+  const { error } = await supabase.auth.updateUser({ password: motDePasse })
+  if (!error) return {}
+  const texte = (error.message ?? '').toLowerCase()
+  if (texte.includes('different from the old')) {
+    return { erreur: 'Nouveau mot de passe : il doit être différent de l’ancien.' }
+  }
+  if (texte.includes('reauthentication') || texte.includes('recent login')) {
+    return { erreur: 'Par sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.' }
+  }
+  return { erreur: messageErreur(error) }
+}

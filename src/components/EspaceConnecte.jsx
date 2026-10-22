@@ -1,19 +1,22 @@
-import { NavLink, Outlet } from 'react-router'
-import { HandCoins, House, Inbox, LogOut, Plus, UserRound } from 'lucide-react'
+import { Link, NavLink, Outlet } from 'react-router'
+import { HandCoins, House, Inbox, LogOut, Plus, Settings, UserRound } from 'lucide-react'
 import { deconnecter } from '../lib/auth'
 import { useSession } from '../lib/session'
 import { Logo } from './Marque'
 
-// Seules les pages qui existent figurent dans la navigation (pas de messagerie ni de paramètres : hors périmètre).
+// Navigation par rôle. Les entrées « mobile: false » n'apparaissent pas dans la barre du bas
+// (4 entrées au plus sur 375 px) : on y accède par la pastille de l'en-tête.
 const NAVIGATION = {
   client: [
-    ['/client', 'Mes demandes', House],
+    ['/client', 'Tableau de bord', House],
     ['/client/publier', 'Créer une demande', Plus],
+    ['/client/parametres', 'Paramètres', Settings, { mobile: false }],
   ],
   artisan: [
     ['/artisan', 'Mon fil', Inbox],
     ['/artisan/offres', 'Mes offres', HandCoins],
     ['/artisan/profil', 'Mon profil', UserRound],
+    ['/artisan/parametres', 'Paramètres', Settings, { mobile: false }],
   ],
 }
 
@@ -21,7 +24,9 @@ const NAVIGATION = {
 // barre latérale sur ordinateur (md et plus), barre de navigation en bas sur téléphone.
 export default function EspaceConnecte({ artisan = false }) {
   const { profil } = useSession()
-  const liens = NAVIGATION[artisan ? 'artisan' : 'client']
+  const role = artisan ? 'artisan' : 'client'
+  const liens = NAVIGATION[role]
+  const liensMobile = liens.filter(([, , , options]) => options?.mobile !== false)
   const initiale = (profil?.full_name ?? '').trim().charAt(0).toUpperCase()
 
   return (
@@ -30,12 +35,16 @@ export default function EspaceConnecte({ artisan = false }) {
         <div className="flex h-16 w-full items-center justify-between gap-3 px-4 md:px-6">
           <Logo />
           <div className="flex shrink-0 items-center gap-2">
-            <span className="inline-flex h-11 items-center gap-2 rounded-full border border-line pl-1.5 pr-4 font-bold text-ink">
+            <Link
+              to={`/${role}/parametres`}
+              title="Paramètres du compte"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-line pl-1.5 pr-4 font-bold text-ink hover:border-brand"
+            >
               <span className="grid h-8 w-8 place-items-center rounded-full bg-sand font-display text-brand" aria-hidden="true">
                 {initiale || <UserRound className="h-4 w-4" strokeWidth={2.5} />}
               </span>
               {artisan ? 'Artisan' : 'Client'}
-            </span>
+            </Link>
             {/* Sur ordinateur, la déconnexion est dans la barre latérale */}
             <button
               type="button"
@@ -90,8 +99,8 @@ export default function EspaceConnecte({ artisan = false }) {
         aria-label="Navigation"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white shadow-float md:hidden"
       >
-        <div className={`mx-auto grid w-full max-w-md ${liens.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          {liens.map(([chemin, libelle, Icone]) => (
+        <div className="mx-auto grid w-full max-w-md" style={{ gridTemplateColumns: `repeat(${liensMobile.length}, minmax(0, 1fr))` }}>
+          {liensMobile.map(([chemin, libelle, Icone]) => (
             <NavLink
               key={chemin}
               to={chemin}

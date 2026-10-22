@@ -9,6 +9,7 @@ import DetailDemande from './pages/DetailDemande'
 import FilArtisan from './pages/FilArtisan'
 import Inscription from './pages/Inscription'
 import MesOffres from './pages/MesOffres'
+import Parametres from './pages/Parametres'
 import ProfilArtisan from './pages/ProfilArtisan'
 import PublierDemande from './pages/PublierDemande'
 
@@ -37,6 +38,7 @@ function App() {
             <Route path="/client" element={<Accueil />} />
             <Route path="/client/publier" element={<PublierDemande />} />
             <Route path="/client/demandes/:id" element={<DetailDemande />} />
+            <Route path="/client/parametres" element={<Parametres />} />
           </Route>
 
           <Route element={<PageProtegee role="artisan"><EspaceConnecte artisan /></PageProtegee>}>
@@ -44,6 +46,7 @@ function App() {
             <Route path="/artisan/demandes/:id" element={<DemandeArtisan />} />
             <Route path="/artisan/offres" element={<MesOffres />} />
             <Route path="/artisan/profil" element={<PageProfilArtisan />} />
+            <Route path="/artisan/parametres" element={<Parametres />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
