@@ -50,11 +50,19 @@ export async function chargerMesDemandes(idClient) {
   if (error) return { erreur: 'Impossible de charger vos demandes. Rechargez la page.' }
   if (data.length === 0) return { demandes: [] }
 
-  // Nombre d'offres reçues par demande, hors offres retirées (fonction nombre_offres, US06)
-  const comptes = await supabase.rpc('nombre_offres', { p_request_ids: data.map((d) => d.id) })
-  if (comptes.error) return { erreur: 'Impossible de charger vos demandes. Rechargez la page.' }
+  const ids = data.map((d) => d.id)
+  const [comptes, notes] = await Promise.all([
+    // Nombre d'offres reçues par demande, hors offres retirées (fonction nombre_offres, US06)
+    supabase.rpc('nombre_offres', { p_request_ids: ids }),
+    // Demandes déjà notées (US12)
+    supabase.from('ratings').select('request_id').in('request_id', ids),
+  ])
+  if (comptes.error || notes.error) return { erreur: 'Impossible de charger vos demandes. Rechargez la page.' }
   const nbParDemande = new Map(comptes.data.map((c) => [c.request_id, c.nb_offres]))
-  return { demandes: data.map((d) => ({ ...d, nbOffres: nbParDemande.get(d.id) ?? 0 })) }
+  const notees = new Set(notes.data.map((n) => n.request_id))
+  return {
+    demandes: data.map((d) => ({ ...d, nbOffres: nbParDemande.get(d.id) ?? 0, notee: notees.has(d.id) })),
+  }
 }
 
 // RG09 : une demande ouverte ou attribuée peut être annulée (la base refuse les autres cas)
@@ -80,7 +88,7 @@ export async function annulerDemande(idDemande) {
 // Une demande du client et ses offres (hors retirées), de la moins chère à la plus chère,
 // avec le prénom, la disponibilité et la note de chaque artisan (RG11)
 export async function chargerDetailDemande(idDemande) {
-  const [demande, offres] = await Promise.all([
+  const [demande, offres, maNote] = await Promise.all([
     supabase.from('requests').select(COLONNES_DEMANDE).eq('id', idDemande).maybeSingle(),
     supabase
       .from('offers')
@@ -90,10 +98,14 @@ export async function chargerDetailDemande(idDemande) {
       .neq('status', 'retiree')
       .order('price', { ascending: true })
       .order('created_at', { ascending: true }),
+    // La note donnée pour cette demande, s'il y en a une (US12)
+    supabase.from('ratings').select('score, comment').eq('request_id', idDemande).maybeSingle(),
   ])
-  if (demande.error || offres.error) return { erreur: 'Impossible de charger la demande. Rechargez la page.' }
+  if (demande.error || offres.error || maNote.error) {
+    return { erreur: 'Impossible de charger la demande. Rechargez la page.' }
+  }
   if (!demande.data) return { erreur: "Cette demande n'existe pas ou ne vous appartient pas." }
-  if (offres.data.length === 0) return { demande: demande.data, offres: [] }
+  if (offres.data.length === 0) return { demande: demande.data, offres: [], maNote: maNote.data }
 
   const notes = await supabase
     .from('artisan_ratings')
@@ -105,6 +117,7 @@ export async function chargerDetailDemande(idDemande) {
   return {
     demande: demande.data,
     offres: offres.data.map((o) => ({ ...o, note: noteParArtisan.get(o.artisan.id) ?? null })),
+    maNote: maNote.data,
   }
 }
 
@@ -116,6 +129,38 @@ export async function choisirOffre(idOffre) {
   if (texte.includes("n'est plus ouverte")) return { erreur: 'Cette demande a déjà une offre choisie ou a été annulée. Rechargez la page.' }
   if (texte.includes("n'est plus disponible")) return { erreur: "L'artisan a retiré ou modifié cette offre. Rechargez la page pour voir les offres à jour." }
   return { erreur: "L'offre n'a pas pu être choisie. Vérifiez votre connexion et réessayez." }
+}
+
+// --- Terminer l'intervention et noter l'artisan (US12) ---
+
+export const COMMENTAIRE_MAX = 200
+
+// RG10 : seul le client passe une demande attribuée à « Terminée » (la base le vérifie)
+export async function terminerDemande(idDemande) {
+  const { data, error } = await supabase
+    .from('requests')
+    .update({ status: 'terminee' })
+    .eq('id', idDemande)
+    .select('status')
+    .maybeSingle()
+  if (error || data?.status !== 'terminee') {
+    return { erreur: "L'intervention n'a pas pu être marquée comme terminée. Rechargez la page et réessayez." }
+  }
+  return {}
+}
+
+// RG10 : une note de 1 à 5 par demande terminée, commentaire facultatif de 200 caractères
+export async function noterArtisan({ idDemande, idArtisan, idClient, score, commentaire }) {
+  const { error } = await supabase.from('ratings').insert({
+    request_id: idDemande,
+    artisan_id: idArtisan,
+    client_id: idClient,
+    score,
+    comment: commentaire.trim() || null,
+  })
+  if (!error) return {}
+  if (error.code === '23505') return { erreur: 'Vous avez déjà noté cet artisan pour cette demande. Rechargez la page.' }
+  return { erreur: "Votre note n'a pas pu être envoyée. Vérifiez votre connexion et réessayez." }
 }
 
 // « 4,6 ★ (12 avis) » ou null si l'artisan n'a pas encore d'avis (« Nouveau »)
