@@ -280,6 +280,18 @@ as $$
   );
 $$;
 
+-- L'artisan connecté a-t-il fait une offre sur cette demande ? (US08, migration 007)
+create or replace function private.artisan_has_offer(p_request_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.offers o
+    where o.request_id = p_request_id and o.artisan_id = (select auth.uid())
+  );
+$$;
+
 -- L'utilisateur connecté peut-il voir le téléphone de p_user_id ? (RG08)
 create or replace function private.can_see_phone(p_user_id uuid)
 returns boolean
@@ -393,6 +405,7 @@ create policy requests_select on public.requests
        client_id = (select auth.uid())
     or private.artisan_can_see_request(id)
     or private.is_retained_artisan(id)
+    or private.artisan_has_offer(id)       -- US08 (migration 007) : « Mes offres »
   );
 create policy requests_insert on public.requests
   for insert to authenticated

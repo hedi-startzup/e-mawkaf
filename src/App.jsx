@@ -3,8 +3,10 @@ import EspaceConnecte from './components/EspaceConnecte'
 import { PageProtegee, PageVisiteur, SessionProvider, useSession } from './lib/session'
 import Accueil from './pages/Accueil'
 import Connexion from './pages/Connexion'
+import DemandeArtisan from './pages/DemandeArtisan'
 import FilArtisan from './pages/FilArtisan'
 import Inscription from './pages/Inscription'
+import MesOffres from './pages/MesOffres'
 import ProfilArtisan from './pages/ProfilArtisan'
 import PublierDemande from './pages/PublierDemande'
 
@@ -35,6 +37,8 @@ function App() {
 
           <Route element={<PageProtegee role="artisan"><EspaceConnecte artisan /></PageProtegee>}>
             <Route path="/artisan" element={<PageFilArtisan />} />
+            <Route path="/artisan/demandes/:id" element={<DemandeArtisan />} />
+            <Route path="/artisan/offres" element={<MesOffres />} />
             <Route path="/artisan/profil" element={<PageProfilArtisan />} />
           </Route>
 
