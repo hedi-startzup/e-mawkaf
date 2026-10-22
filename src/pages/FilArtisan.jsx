@@ -29,7 +29,7 @@ export default function FilArtisan({ profil, allerAuProfil }) {
 
   if (sansMetier) {
     return (
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-5 md:mx-auto md:w-full md:max-w-2xl">
         <h1 className="text-[28px] leading-tight">Mon fil</h1>
         <div className="flex flex-col gap-3 rounded-card border border-sand-deep bg-sand p-4">
           <p className="font-display text-xl font-bold text-brand">Complétez votre profil</p>
@@ -84,10 +84,10 @@ export default function FilArtisan({ profil, allerAuProfil }) {
       )}
 
       {!chargement && !erreur && demandes.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid gap-3 md:grid-cols-2 md:gap-4">
           {demandes.map((demande) => (
-            <li key={demande.id}>
-              <Link to={`/artisan/demandes/${demande.id}`} className="block rounded-card">
+            <li key={demande.id} className="h-full">
+              <Link to={`/artisan/demandes/${demande.id}`} className="group block h-full rounded-card">
                 <CarteDemande demande={demande} />
               </Link>
             </li>
@@ -138,7 +138,7 @@ function CarteDemande({ demande }) {
   const n = demande.nbOffres
 
   return (
-    <article className="flex flex-col gap-3 rounded-card border border-line bg-white p-4 shadow-card">
+    <article className="flex h-full flex-col gap-3 rounded-card border border-line bg-white p-4 shadow-card transition group-hover:border-brand group-hover:shadow-press">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-sand text-brand">
