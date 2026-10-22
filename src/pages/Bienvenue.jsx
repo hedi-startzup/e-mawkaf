@@ -1,16 +1,16 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { ChevronDown, Clock, MapPin, Search, ShieldCheck, Star } from 'lucide-react'
-import { Etoile, Filigrane, Logo } from '../components/Marque'
+import { ArrowRightLeft, ChevronDown, Search, ShieldCheck, ShieldHalf, UserSearch } from 'lucide-react'
+import { Logo, Zellige } from '../components/Marque'
 import { chargerMetiersDemande } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 
-// Avantages : seulement des promesses vraies (pas d'« artisans vérifiés » : aucune vérification n'existe).
+// Avantages de la maquette n°1 (libellés validés par l'équipe, à confirmer par Hedi)
 const AVANTAGES = [
-  [Star, 'Artisans notés par les clients'],
-  [MapPin, 'Demandes près de chez vous'],
-  [Clock, 'Réponses rapides'],
-  [ShieldCheck, 'Numéro protégé jusqu’au choix'],
+  [ShieldCheck, 'Artisans vérifiés'],
+  [UserSearch, 'Demandes locales'],
+  [ArrowRightLeft, 'Mise en relation rapide'],
+  [ShieldHalf, 'Sécurisé'],
 ]
 
 // Page d'accueil publique (maquette n°1). Une personne connectée est envoyée vers son espace (PageVisiteur).
@@ -24,42 +24,44 @@ export default function Bienvenue() {
     chargerMetiersDemande().then(({ metiers: liste }) => setMetiers(liste ?? []))
   }, [])
 
-  const iconeChoisie = metier ? iconeMetier(metiers.find((m) => m.id === metier)?.icon) : Search
+  const iconeChoisie = metier ? iconeMetier(metiers.find((m) => m.id === metier)?.icon) : null
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <header className="border-b border-line bg-white">
-        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-3 px-4 md:px-8">
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white">
+      <Zellige className="absolute -right-1 -top-1 h-14 w-14 md:h-44 md:w-44" />
+
+      <header className="relative">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 md:h-20 md:px-8">
           <Logo />
-          <nav aria-label="Compte" className="flex shrink-0 items-center gap-2">
+          <nav aria-label="Compte" className="mr-10 flex shrink-0 items-center gap-1 md:mr-36">
             <Link to="/connexion" className="inline-flex h-11 items-center rounded-xl px-3 font-bold text-brand hover:bg-brand-light">
               Se connecter
             </Link>
-            <Link
-              to="/inscription"
-              className="hidden h-11 items-center rounded-xl bg-brand px-4 font-bold text-white shadow-press hover:bg-brand-dark sm:inline-flex"
-            >
+            <Link to="/inscription" className="hidden h-11 items-center rounded-xl px-3 font-bold text-brand hover:bg-brand-light sm:inline-flex">
               Créer un compte
             </Link>
           </nav>
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-4 py-8 md:px-8 md:py-14">
-        <section className="grid items-center gap-8 md:grid-cols-2">
+      <main className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 pb-12 pt-6 md:px-8 md:pt-12">
+        <section className="grid items-center gap-8 md:grid-cols-[1.1fr_1fr]">
           <div className="flex flex-col gap-6">
             <div>
-              <h1 className="text-[32px] leading-tight md:text-[44px]">Trouvez un artisan près de chez vous</h1>
-              <p className="mt-3 text-lg text-muted">Rapide · Fiable · Local</p>
+              <h1 className="text-[34px] leading-[1.15] md:text-[52px]">
+                Trouvez un artisan
+                <span className="block text-accent">près de chez vous</span>
+              </h1>
+              <p className="mt-3 text-lg text-ink md:text-xl">Rapide · Fiable · Local</p>
             </div>
 
             <form
               onSubmit={(e) => { e.preventDefault(); navigate('/inscription') }}
-              className="flex flex-col gap-3 rounded-card border border-line bg-white p-2 shadow-card sm:flex-row"
+              className="flex max-w-lg overflow-hidden rounded-xl border border-line bg-white shadow-card"
             >
               <label htmlFor="service" className="sr-only">Quel service recherchez-vous ?</label>
-              <span className="relative flex-1">
-                {createElement(iconeChoisie, {
+              <span className="relative min-w-0 flex-1">
+                {iconeChoisie && createElement(iconeChoisie, {
                   className: 'pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand',
                   strokeWidth: 2.5,
                   'aria-hidden': true,
@@ -68,7 +70,7 @@ export default function Bienvenue() {
                   id="service"
                   value={metier}
                   onChange={(e) => setMetier(e.target.value)}
-                  className="champ appearance-none border-0 pl-11 pr-10 focus:shadow-none"
+                  className={`h-14 w-full appearance-none bg-transparent pr-10 text-base text-ink md:text-lg focus:outline-none ${iconeChoisie ? 'pl-11' : 'pl-4'} ${metier ? '' : 'text-muted'}`}
                 >
                   <option value="">Quel service recherchez-vous ?</option>
                   {metiers.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
@@ -77,10 +79,10 @@ export default function Bienvenue() {
               </span>
               <button
                 type="submit"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-6 font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
+                aria-label="Rechercher un artisan"
+                className="grid w-14 shrink-0 place-items-center bg-accent text-white hover:brightness-95"
               >
-                <Search className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
-                Trouver un artisan
+                <Search className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
               </button>
             </form>
 
@@ -90,23 +92,23 @@ export default function Bienvenue() {
             </p>
           </div>
 
-          {/* Illustration : le logo sur un panneau sable avec des étoiles (aucune image externe) */}
-          <div className="relative hidden aspect-square w-full max-w-md justify-self-center overflow-hidden rounded-[2rem] bg-sand md:grid md:place-items-center">
-            <Filigrane className="-left-10 -top-10 h-40 w-40" />
-            <Filigrane className="-bottom-14 -right-12 h-52 w-52 opacity-50" />
-            <Etoile className="absolute right-10 top-10 h-10 w-10 text-accent" trou={false} />
-            <Etoile className="absolute bottom-12 left-12 h-7 w-7 text-brand" trou={false} />
-            <div className="relative"><Logo grand /></div>
-          </div>
+          {/* Illustration fournie par l'équipe (extraite de la maquette, fond rendu transparent) */}
+          <img
+            src="/illustrations/artisan-accueil.png"
+            alt=""
+            width={555}
+            height={504}
+            className="mx-auto w-full max-w-xs md:max-w-md"
+          />
         </section>
 
-        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
           {AVANTAGES.map(([IconeAvantage, texte]) => (
-            <li key={texte} className="flex flex-col items-center gap-3 rounded-card border border-line bg-white p-4 text-center shadow-card">
-              <span className="grid h-12 w-12 place-items-center rounded-full bg-brand-light text-brand">
-                <IconeAvantage className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+            <li key={texte} className="flex flex-col items-center gap-3 text-center">
+              <span className="grid h-16 w-16 place-items-center rounded-full bg-accent-light text-accent">
+                <IconeAvantage className="h-7 w-7" strokeWidth={2.25} aria-hidden="true" />
               </span>
-              <span className="font-bold leading-tight">{texte}</span>
+              <span className="font-bold leading-tight text-ink">{texte}</span>
             </li>
           ))}
         </ul>
@@ -121,9 +123,9 @@ export default function Bienvenue() {
                   <li key={m.id}>
                     <Link
                       to="/inscription"
-                      className="flex min-h-14 items-center gap-3 rounded-xl border border-line bg-white p-3 font-bold hover:border-brand"
+                      className="flex min-h-14 items-center gap-3 rounded-xl border border-line bg-white p-3 font-bold hover:border-accent"
                     >
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-sand text-brand">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-light text-accent">
                         <IconeMetier className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                       </span>
                       <span className="min-w-0 leading-tight">{m.label}</span>

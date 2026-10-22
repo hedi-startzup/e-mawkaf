@@ -86,3 +86,39 @@ export function CadreVisiteur({ children }) {
     </main>
   )
 }
+
+// Coin décoratif en zellige (maquette) : carreaux en escalier aux couleurs du logo,
+// dessiné en SVG pour rester net à toutes les tailles. Toujours décoratif, jamais derrière du texte.
+const COULEURS_ZELLIGE = ['fill-brand', 'fill-accent', 'fill-sand-deep', 'fill-brand-light', 'fill-accent', 'fill-brand']
+
+export function Zellige({ className = '' }) {
+  const carreaux = []
+  for (let ligne = 0; ligne < 5; ligne++) {
+    for (let colonne = 0; colonne < 5; colonne++) {
+      // Escalier : plus de carreaux vers le coin haut droit
+      if (colonne < ligne) continue
+      const x = (4 - colonne) * 24
+      const y = ligne * 24
+      const couleur = COULEURS_ZELLIGE[(ligne * 2 + colonne) % COULEURS_ZELLIGE.length]
+      carreaux.push(
+        (ligne + colonne) % 2 === 0 ? (
+          // Étoile à 8 branches
+          <path key={`${ligne}-${colonne}`} className={couleur}
+            transform={`translate(${x + 12} ${y + 12}) scale(0.2)`}
+            d="M-35 -35H35V35H-35Z M0 -49.5L49.5 0L0 49.5L-49.5 0Z" />
+        ) : (
+          // Losange et petit carré
+          <g key={`${ligne}-${colonne}`} transform={`translate(${x + 12} ${y + 12})`}>
+            <path className={couleur} d="M0 -10L10 0L0 10L-10 0Z" />
+            <rect x="-3" y="-3" width="6" height="6" className="fill-white" />
+          </g>
+        ),
+      )
+    }
+  }
+  return (
+    <svg viewBox="0 0 120 120" className={`pointer-events-none select-none ${className}`} aria-hidden="true">
+      {carreaux}
+    </svg>
+  )
+}
