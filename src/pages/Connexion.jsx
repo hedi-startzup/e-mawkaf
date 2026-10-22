@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { AtSign, LockKeyhole } from 'lucide-react'
 import { CadreVisiteur } from '../components/Marque'
-import { Bouton, Champ, MessageErreur, Titre } from '../components/ui'
-import { connecter } from '../lib/auth'
+import { Bouton, BoutonGoogle, Champ, MessageErreur, Titre } from '../components/ui'
+import { connecter, connecterAvecGoogle } from '../lib/auth'
 import { emailValide, telephoneValide } from '../lib/validation'
 
 // Connexion par e-mail ou par téléphone (US03), mise en page de la maquette.
@@ -48,6 +48,11 @@ export default function Connexion() {
           erreur={erreurs.motDePasse} />
         <MessageErreur>{erreurGenerale}</MessageErreur>
         <Bouton type="submit" disabled={envoi} className="mt-2">{envoi ? 'Connexion…' : 'Se connecter'}</Bouton>
+        <BoutonGoogle disabled={envoi} onClick={async () => {
+          setErreurGenerale(null)
+          const { erreur } = await connecterAvecGoogle()
+          if (erreur) setErreurGenerale(erreur)
+        }} />
       </form>
 
       <p className="text-center text-lg">

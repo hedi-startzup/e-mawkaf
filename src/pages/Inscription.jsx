@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { AtSign, HardHat, House, LockKeyhole, Mail, Smartphone, UserRound } from 'lucide-react'
 import { CadreVisiteur } from '../components/Marque'
-import { Bouton, Champ, Choix, MessageErreur, Titre } from '../components/ui'
-import { inscrire } from '../lib/auth'
+import { Bouton, BoutonGoogle, Champ, Choix, MessageErreur, Titre } from '../components/ui'
+import { connecterAvecGoogle, inscrire } from '../lib/auth'
 import { erreurEmail, erreurMotDePasse, erreurNom, erreurRole, erreurTelephone } from '../lib/validation'
 
 const ROLES = [
@@ -88,6 +88,12 @@ export default function Inscription() {
         <MessageErreur>{erreurGenerale}</MessageErreur>
 
         <Bouton type="submit" disabled={envoi}>{envoi ? 'Création…' : 'Créer mon compte'}</Bouton>
+        {/* Avec Google, le rôle et le téléphone sont demandés juste après (Compléter mon profil) */}
+        <BoutonGoogle disabled={envoi} onClick={async () => {
+          setErreurGenerale(null)
+          const { erreur } = await connecterAvecGoogle()
+          if (erreur) setErreurGenerale(erreur)
+        }} />
       </form>
 
       <p className="text-center text-lg">

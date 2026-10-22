@@ -59,6 +59,28 @@ export async function connecter({ identifiant, motDePasse }) {
   return { utilisateur: data.user }
 }
 
+// Connexion avec Google : Supabase renvoie ensuite vers l'appli. À la première connexion,
+// le compte n'a ni rôle ni téléphone : la session envoie vers « Compléter mon profil ».
+// La clé Google est réglée dans le tableau de bord Supabase, jamais dans le code.
+export async function connecterAvecGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  })
+  if (error) return { erreur: 'La connexion avec Google est indisponible pour le moment. Utilisez votre e-mail ou votre téléphone.' }
+  return {}
+}
+
+// Après une connexion Google : enregistre le rôle (RG01), le nom et le téléphone (RG02) dans le
+// compte, puis crée le profil et le contact exactement comme après une inscription (obtenirProfil).
+export async function completerProfil({ role, nom, telephone }) {
+  const { data, error } = await supabase.auth.updateUser({
+    data: { role, full_name: nom.trim(), phone: nettoyerTelephone(telephone) },
+  })
+  if (error) return { erreur: messageErreur(error) }
+  return obtenirProfil(data.user)
+}
+
 export async function deconnecter() {
   await supabase.auth.signOut()
 }
@@ -74,10 +96,9 @@ export async function obtenirProfil(utilisateur) {
   if (lecture.error) return { erreur: 'Impossible de charger votre profil. Rechargez la page.' }
   if (lecture.data) return { profil: lecture.data }
 
+  // Compte sans rôle ou sans téléphone (connexion Google) : l'utilisateur doit compléter son profil
   const infos = utilisateur.user_metadata ?? {}
-  if (!infos.role || !infos.full_name || !infos.phone) {
-    return { erreur: "Votre compte est incomplet. Créez un nouveau compte ou contactez l'équipe Mawkaf." }
-  }
+  if (!infos.role || !infos.full_name || !infos.phone) return { aCompleter: true }
 
   // Le rôle n'est choisi qu'ici, une seule fois : la base interdit de le modifier ensuite (RG01)
   const profil = await supabase

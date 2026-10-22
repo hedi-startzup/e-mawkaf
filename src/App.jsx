@@ -1,8 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
 import EspaceConnecte from './components/EspaceConnecte'
-import { PageProtegee, PageVisiteur, SessionProvider, useSession } from './lib/session'
+import { PageACompleter, PageProtegee, PageVisiteur, SessionProvider, useSession } from './lib/session'
 import Accueil from './pages/Accueil'
 import Bienvenue from './pages/Bienvenue'
+import CompleterProfil from './pages/CompleterProfil'
 import Connexion from './pages/Connexion'
 import DemandeArtisan from './pages/DemandeArtisan'
 import DetailDemande from './pages/DetailDemande'
@@ -34,6 +35,7 @@ function App() {
           <Route path="/" element={<PageVisiteur><Bienvenue /></PageVisiteur>} />
           <Route path="/connexion" element={<PageVisiteur><Connexion /></PageVisiteur>} />
           <Route path="/inscription" element={<PageVisiteur><Inscription /></PageVisiteur>} />
+          <Route path="/completer-profil" element={<PageACompleter><CompleterProfil /></PageACompleter>} />
 
           <Route element={<PageProtegee role="client"><EspaceConnecte /></PageProtegee>}>
             <Route path="/client" element={<Accueil />} />
