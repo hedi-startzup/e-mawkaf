@@ -2,6 +2,7 @@ import { createElement, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ArrowLeft, Banknote, CalendarDays, Check, MessageSquareText, Pencil, Send, Undo2, X } from 'lucide-react'
 import { Epingle } from '../components/Marque'
+import MiseEnRelation from '../components/MiseEnRelation'
 import { Bouton, Champ, MessageErreur } from '../components/ui'
 import { libelleJour } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
@@ -143,6 +144,10 @@ function Offre({ demande, offre, idArtisan, surEnvoi }) {
           <p className="font-display text-2xl font-bold text-brand">{offre.price} DH</p>
           {offre.message && <p className="break-words">« {offre.message} »</p>}
         </div>
+        {/* US11 : après attribution, l'artisan retenu obtient le contact du client */}
+        {offre.status === 'acceptee' && (
+          <MiseEnRelation idAutre={demande.client_id} role="artisan" demande={demande} prix={offre.price} />
+        )}
         <MessageErreur>{erreurGenerale}</MessageErreur>
         {ouverte && enAttente && !confirmerRetrait && (
           <>

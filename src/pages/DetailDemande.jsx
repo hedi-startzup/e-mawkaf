@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ArrowLeft, CalendarDays, Check, Star, Sun } from 'lucide-react'
 import { Epingle, Etoile } from '../components/Marque'
+import MiseEnRelation from '../components/MiseEnRelation'
 import { libelleJour } from '../lib/dates'
 import { STATUTS_DEMANDE, chargerDetailDemande, choisirOffre, texteNote } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
@@ -168,6 +169,11 @@ export default function DetailDemande() {
               <Check className="h-5 w-5 shrink-0" strokeWidth={3} aria-hidden="true" />
               Vous avez choisi {prenomDe(offreChoisie.artisan.full_name)} à {offreChoisie.price} DH.
             </p>
+          )}
+
+          {/* US11 : après attribution, le client obtient le contact de l'artisan retenu */}
+          {offreChoisie && ['attribuee', 'terminee'].includes(demande.status) && (
+            <MiseEnRelation idAutre={offreChoisie.artisan.id} role="client" demande={demande} prix={offreChoisie.price} />
           )}
 
           <h1 className="text-[28px] leading-tight">
