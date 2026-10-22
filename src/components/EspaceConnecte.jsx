@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router'
-import { HandCoins, House, Inbox, LogOut, Plus, Settings, UserRound } from 'lucide-react'
+import { HandCoins, House, Inbox, LogOut, MessagesSquare, Plus, Settings, UserRound } from 'lucide-react'
 import { deconnecter } from '../lib/auth'
 import { useSession } from '../lib/session'
 import { Logo } from './Marque'
@@ -10,11 +10,13 @@ const NAVIGATION = {
   client: [
     ['/client', 'Tableau de bord', House],
     ['/client/publier', 'Créer une demande', Plus],
+    ['/client/messages', 'Messages', MessagesSquare],
     ['/client/parametres', 'Paramètres', Settings, { mobile: false }],
   ],
   artisan: [
     ['/artisan', 'Mon fil', Inbox],
     ['/artisan/offres', 'Mes offres', HandCoins],
+    ['/artisan/messages', 'Messages', MessagesSquare],
     ['/artisan/profil', 'Mon profil', UserRound],
     ['/artisan/parametres', 'Paramètres', Settings, { mobile: false }],
   ],

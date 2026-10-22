@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { CalendarDays, Check, ChevronRight, ClipboardList, Handshake, Inbox, Plus, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, ClipboardList, Handshake, Inbox, MessagesSquare, Plus, X } from 'lucide-react'
 import { Epingle, Etoile } from '../components/Marque'
 import { libelleJour } from '../lib/dates'
 import { STATUTS_DEMANDE, annulable, annulerDemande, chargerMesDemandes } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
+import { chargerConversations } from '../lib/messages'
 import { useSession } from '../lib/session'
 
 function texteOffres(nb) {
@@ -135,6 +136,7 @@ export default function Accueil() {
   const { state } = useLocation()
   const [demandes, setDemandes] = useState(null)
   const [erreur, setErreur] = useState(null)
+  const [nbConversations, setNbConversations] = useState(null)
   const prenom = (profil?.full_name ?? '').split(' ')[0]
 
   useEffect(() => {
@@ -144,12 +146,20 @@ export default function Accueil() {
     })
   }, [profil.id])
 
+  // Conversations en cours (demandes attribuées) : si le chargement échoue, la tuile affiche « – »
+  useEffect(() => {
+    chargerConversations(profil).then(({ conversations }) => {
+      if (conversations) setNbConversations(conversations.filter((c) => c.statut === 'attribuee').length)
+    })
+  }, [profil])
+
   // Offres reçues : seulement sur les demandes encore ouvertes (celles où le client doit choisir)
   const ouvertes = demandes?.filter((d) => d.status === 'ouverte')
   const compteurs = [
     [ClipboardList, 'Demandes ouvertes', ouvertes?.length],
     [Inbox, 'Offres à comparer', ouvertes?.reduce((total, d) => total + d.nbOffres, 0)],
     [Handshake, 'Artisans retenus', demandes?.filter((d) => d.status === 'attribuee').length],
+    [MessagesSquare, 'Conversations en cours', nbConversations],
   ]
 
   return (
