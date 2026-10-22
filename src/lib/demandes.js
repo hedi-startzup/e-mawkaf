@@ -13,8 +13,8 @@ export async function chargerMetiersDemande() {
 }
 
 // Publie une demande (US05). La base vérifie aussi les règles (RLS, dates, prix).
-export async function publierDemande({ idClient, metier, description, ville, arrondissement, quartier, jour, prix }) {
-  const { error } = await supabase.from('requests').insert({
+export async function publierDemande({ idClient, metier, description, ville, arrondissement, quartier, jour, prix, adresse, enregistrerMaison }) {
+  const { data, error } = await supabase.from('requests').insert({
     client_id: idClient,
     trade: metier,
     description: description.trim(),
@@ -23,8 +23,18 @@ export async function publierDemande({ idClient, metier, description, ville, arr
     neighborhood: quartier.trim() || null,
     service_date: jour,
     proposed_price: prix.trim() ? Number(prix) : null, // vide = demande de devis (RG04)
-  })
-  if (!error) return {}
+  }).select('id').single()
+  if (!error) {
+    // US26 : adresse exacte de la demande, lisible seulement par le client et l'artisan retenu
+    const envoiAdresse = await supabase.from('request_addresses').insert({ request_id: data.id, address: adresse.trim() })
+    // La demande est déjà publiée : on ne bloque pas le client (il pourra donner l'adresse par message)
+    if (envoiAdresse.error) return { publiee: true, adresseManquante: true }
+    // « Maison » choisie sans adresse enregistrée : on la garde pour la prochaine fois
+    if (enregistrerMaison) {
+      await supabase.from('client_addresses').upsert({ user_id: idClient, address: adresse.trim() }, { onConflict: 'user_id' })
+    }
+    return { publiee: true }
+  }
   if (error.message?.includes("aujourd'hui ou demain")) {
     return { erreur: "Jour : la demande doit être pour aujourd'hui ou demain. Rechargez la page et réessayez." }
   }
@@ -39,7 +49,7 @@ export const STATUTS_DEMANDE = {
 }
 
 const COLONNES_DEMANDE =
-  'id, description, district, neighborhood, service_date, proposed_price, status, accepted_offer_id, created_at, metier:trades(label, icon)'
+  'id, description, city, district, neighborhood, service_date, proposed_price, status, accepted_offer_id, created_at, metier:trades(label, icon)'
 
 // Demandes du client connecté, les plus récentes en premier (la RLS ne renvoie que les siennes)
 export async function chargerMesDemandes(idClient) {
