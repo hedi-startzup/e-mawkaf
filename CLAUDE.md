@@ -57,11 +57,11 @@ Artisan : renseigne ses métiers → voit les demandes qui le concernent → acc
 - **RG06** Un artisan fait au plus une offre par demande ; tant que la demande est ouverte, il peut la modifier ou la retirer. « Accepter le prix » = une offre au prix proposé, possible seulement si la demande a un prix.
 - **RG07** Le client choisit une seule offre : demande `attribuee`, offre `acceptee`, les autres `refusee`. Plus aucune offre n'est possible ensuite.
 - **RG08** Les numéros de téléphone ne sont visibles qu'entre le client et l'artisan retenu, et seulement après attribution. Garanti par la base (RLS sur `contacts`), pas seulement par l'interface.
-- **RG09** Le client peut annuler une demande ouverte ou attribuée. Une demande terminée ne s'annule plus.
+- **RG09** Le client peut annuler une demande ouverte ou attribuée. Une demande terminée ne s'annule plus. La commission simulée (US15) n'est rendue à l'artisan que si l'annulation a lieu avant le jour de l'intervention (décision d'équipe du 22/10/2026, contre l'annulation abusive après le travail ; litiges en lot 3).
 - **RG10** Seul le client passe une demande attribuée à `terminee`. Il note alors l'artisan une seule fois, de 1 à 5, commentaire facultatif de 200 caractères au plus.
 - **RG11** Note d'un artisan = moyenne de ses notes arrondie au dixième, affichée avec le nombre d'avis ; « Nouveau » s'il n'en a aucun.
 - **RG12** Un artisan qui n'est pas « disponible aujourd'hui » ne voit que les demandes pour demain.
-- **RG13** Paiement en espèces entre client et artisan, hors plateforme. Mawkaf n'encaisse rien et n'affiche aucun frais au lancement. Seule exception : la simulation de la démo (US15), clairement étiquetée comme simulée, sans argent réel, sans logo ni nom de banque.
+- **RG13** Paiement en espèces entre client et artisan, hors plateforme. Mawkaf n'encaisse rien et n'affiche aucun frais au lancement. Seule exception : la simulation de la démo (US15), clairement étiquetée comme simulée, sans argent réel. Elle peut citer Wafacash (nom et logo, écran « Mon crédit » uniquement), partenaire envisagé à qui le projet sera présenté (accord de Hedi le 22/10/2026) ; aucun autre nom ni logo de banque.
 
 Contraintes de saisie : description de demande 10 à 300 caractères ; message d'offre 140 caractères au plus ; jour de la demande = aujourd'hui ou demain.
 

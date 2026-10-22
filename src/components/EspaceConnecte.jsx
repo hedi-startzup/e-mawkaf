@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from 'react-router'
-import { HandCoins, Inbox, LogOut, UserRound } from 'lucide-react'
+import { HandCoins, Inbox, LogOut, UserRound, Wallet } from 'lucide-react'
 import { deconnecter } from '../lib/auth'
 import { Filigrane, Logo } from './Marque'
 
 const NAVIGATION_ARTISAN = [
   ['/artisan', 'Mon fil', Inbox],
   ['/artisan/offres', 'Mes offres', HandCoins],
+  ['/artisan/credit', 'Mon crédit', Wallet],
   ['/artisan/profil', 'Mon profil', UserRound],
 ]
 
@@ -61,14 +62,14 @@ export default function EspaceConnecte({ artisan = false }) {
           aria-label="Navigation"
           className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white shadow-float md:hidden"
         >
-          <div className="mx-auto grid w-full max-w-md grid-cols-3">
+          <div className="mx-auto grid w-full max-w-md grid-cols-4">
             {NAVIGATION_ARTISAN.map(([chemin, libelle, Icone]) => (
               <NavLink
                 key={chemin}
                 to={chemin}
                 end
                 className={({ isActive }) =>
-                  `flex h-[72px] flex-col items-center justify-center gap-1 font-bold ${isActive ? 'text-brand' : 'text-muted'}`
+                  `flex h-[72px] flex-col items-center justify-center gap-1 text-sm font-bold ${isActive ? 'text-brand' : 'text-muted'}`
                 }
               >
                 {({ isActive }) => (

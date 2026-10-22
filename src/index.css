@@ -27,6 +27,11 @@
   --color-line: #e7e5e4;
   --color-gray-light: #f2f1f0;
 
+  /* Partenaire de recharge (US15, écran « Mon crédit » uniquement) : jaune et gris Wafacash */
+  --color-partenaire: #f5c400;
+  --color-partenaire-light: #fff7cc;
+  --color-partenaire-ink: #3d3935;
+
   --radius-card: 1rem;
 
   --shadow-card: 0 1px 2px rgb(28 25 23 / 0.06);

@@ -8,6 +8,7 @@ import DetailDemande from './pages/DetailDemande'
 import FilArtisan from './pages/FilArtisan'
 import Inscription from './pages/Inscription'
 import MesOffres from './pages/MesOffres'
+import MonCredit from './pages/MonCredit'
 import ProfilArtisan from './pages/ProfilArtisan'
 import PublierDemande from './pages/PublierDemande'
 
@@ -41,6 +42,7 @@ function App() {
             <Route path="/artisan" element={<PageFilArtisan />} />
             <Route path="/artisan/demandes/:id" element={<DemandeArtisan />} />
             <Route path="/artisan/offres" element={<MesOffres />} />
+            <Route path="/artisan/credit" element={<MonCredit />} />
             <Route path="/artisan/profil" element={<PageProfilArtisan />} />
           </Route>
 
