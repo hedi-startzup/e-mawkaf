@@ -12,11 +12,13 @@ export default function Disponibilite({ profil, surMiseAJour }) {
     const nouvelleValeur = !dispo
     setErreur('')
     surMiseAJour({ ...profil, available_today: nouvelleValeur })
-    const { error } = await supabase
+    // .select() : si la base refuse en silence (aucune ligne modifiée), on le voit (bug MAW-29)
+    const { data, error } = await supabase
       .from('profiles')
       .update({ available_today: nouvelleValeur })
       .eq('id', profil.id)
-    if (error) {
+      .select('id')
+    if (error || !data?.length) {
       surMiseAJour({ ...profil, available_today: !nouvelleValeur })
       setErreur("Votre disponibilité n'a pas pu être enregistrée. Réessayez.")
     }

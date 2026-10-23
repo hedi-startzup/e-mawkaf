@@ -96,18 +96,39 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
       district: arrondissement || null,
       neighborhood: quartier.trim() || null,
     }
-    const { error } = await supabase.from('profiles').update(modifications).eq('id', profil.id)
+    // Bug MAW-29 : on relit ce que la base a vraiment enregistré. Si elle a refusé en silence
+    // (aucune ligne modifiée), on affiche une erreur au lieu de « Profil enregistré ».
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(modifications)
+      .eq('id', profil.id)
+      .select('city, district, neighborhood, trades, available_today')
     setEnvoi(false)
-    if (error) {
-      setErreurs({ envoi: "Votre profil n'a pas pu être enregistré. Réessayez dans un instant." })
+    if (error || !data?.length) {
+      setErreurs({ envoi: "Votre profil n'a pas pu être enregistré. Reconnectez-vous puis réessayez." })
       return
     }
-    surMiseAJour({ ...profil, ...modifications })
+    surMiseAJour({ ...profil, ...data[0] })
     setMessage('Profil enregistré.')
   }
 
   const limiteAtteinte = choisis.length >= METIERS_MAX
   const dispo = profil.available_today
+  // Bug MAW-29 : l'interrupteur s'enregistre tout seul, mais pas les métiers ni le lieu.
+  // On prévient l'artisan tant qu'il n'a pas cliqué sur « Enregistrer ».
+  const nonEnregistre =
+    [...choisis].sort().join(',') !== [...profil.trades].sort().join(',') ||
+    ville !== (profil.city || 'Casablanca') ||
+    (arrondissement || '') !== (profil.district ?? '') ||
+    quartier.trim() !== (profil.neighborhood ?? '')
+
+  // Si l'artisan actualise ou ferme la page sans enregistrer, le navigateur lui demande confirmation
+  useEffect(() => {
+    if (!nonEnregistre) return
+    const avertir = (e) => e.preventDefault()
+    window.addEventListener('beforeunload', avertir)
+    return () => window.removeEventListener('beforeunload', avertir)
+  }, [nonEnregistre])
 
   return (
     <section className="flex flex-col gap-8 md:mx-auto md:w-full md:max-w-2xl">
@@ -306,6 +327,11 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
         </div>
 
         <div className="flex flex-col gap-3">
+          {nonEnregistre && !envoi && (
+            <p role="status" className="rounded-xl border-2 border-accent bg-sand px-3 py-2 font-bold text-ink">
+              Modifications non enregistrées : cliquez sur « Enregistrer » pour les garder.
+            </p>
+          )}
           <Erreur>{erreurs.envoi}</Erreur>
           {message && (
             <p
