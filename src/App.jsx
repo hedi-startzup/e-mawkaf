@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-route
 import EspaceConnecte from './components/EspaceConnecte'
 import { PageACompleter, PageProtegee, PageVerification, PageVisiteur, SessionProvider, useSession } from './lib/session'
 import Accueil from './pages/Accueil'
+import Admin from './pages/Admin'
 import Bienvenue from './pages/Bienvenue'
 import CompleterProfil from './pages/CompleterProfil'
 import Connexion from './pages/Connexion'
@@ -34,6 +35,14 @@ function PageProfilArtisan() {
   return <ProfilArtisan profil={profil} surMiseAJour={mettreAJourProfil} />
 }
 
+// US24 : la page admin demande seulement d'être connecté ; la base vérifie ensuite les droits d'admin
+function PageAdmin() {
+  const { utilisateur, chargement } = useSession()
+  if (chargement) return null
+  if (!utilisateur) return <Navigate to="/connexion" replace />
+  return <Admin />
+}
+
 function App() {
   return (
     <SessionProvider>
@@ -62,6 +71,8 @@ function App() {
             <Route path="/artisan/messages" element={<Messages />} />
             <Route path="/artisan/parametres" element={<Parametres />} />
           </Route>
+
+          <Route path="/admin" element={<PageAdmin />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
