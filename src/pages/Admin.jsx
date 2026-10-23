@@ -1,14 +1,101 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { ArrowLeft, Banknote, CircleCheck, ClipboardList, HandCoins, Lock, Star, UserRound, Wrench } from 'lucide-react'
+import { TriangleAlert, ArrowLeft, Banknote, CircleCheck, ClipboardList, HandCoins, Lock, Star, UserRound, Wrench } from 'lucide-react'
 import { Logo } from '../components/Marque'
 import { MessageErreur, Titre, Tuile } from '../components/ui'
 import { accueilDe } from '../lib/auth'
 import { STATUTS_DEMANDE } from '../lib/demandes'
+import { MOTIFS_LITIGE, STATUTS_LITIGE, chargerLitigesAdmin, rembourserLitige, traiterLitige } from '../lib/litiges'
 import { useSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
 
 const date = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Casablanca' })
+
+// US25 : un litige à traiter (statut, note, remboursement de la commission simulée)
+function CarteLitige({ litige, surChangement }) {
+  const [note, setNote] = useState(litige.admin_note ?? '')
+  const [envoi, setEnvoi] = useState(false)
+  const [message, setMessage] = useState(null)
+  const statut = STATUTS_LITIGE[litige.status] ?? STATUTS_LITIGE.ouvert
+
+  async function agir(action) {
+    setEnvoi(true)
+    setMessage(null)
+    const resultat = action === 'rembourser' ? await rembourserLitige(litige.id) : await traiterLitige(litige.id, action, note)
+    setEnvoi(false)
+    if (resultat.erreur) return setMessage(resultat.erreur)
+    if (action === 'rembourser') setMessage(resultat.montant ? `${resultat.montant} DH rendus à l'artisan.` : 'Aucune commission à rembourser.')
+    surChangement()
+  }
+
+  return (
+    <li className="flex flex-col gap-3 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-bold">{litige.metier} · {litige.ville} · {MOTIFS_LITIGE[litige.reason]}</p>
+        <span className={`rounded-full px-3 py-1 text-sm font-bold ${statut.classes}`}>{statut.label}</span>
+      </div>
+      <p className="text-sm text-muted">
+        Signalé par {litige.ouvert_par} ({litige.role_ouvreur === 'artisan' ? 'artisan' : 'client'}) le {date.format(new Date(litige.created_at))}
+        {' '}· commission retenue : {litige.commission_retenue} DH
+      </p>
+      <p className="break-words rounded-xl bg-gray-light px-3 py-2">« {litige.description} »</p>
+      <label className="flex flex-col gap-1.5">
+        <span className="font-bold">Note de Mawkaf (visible par les deux parties)</span>
+        <textarea rows={2} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} className="champ h-auto py-2.5" />
+      </label>
+      {message && <p role="status" className="font-bold text-brand">{message}</p>}
+      <div className="flex flex-wrap gap-2">
+        {litige.status === 'ouvert' && (
+          <button type="button" disabled={envoi} onClick={() => agir('en_cours')} className="min-h-11 rounded-xl border-2 border-brand bg-white px-4 font-bold text-brand disabled:opacity-60">
+            Passer en cours
+          </button>
+        )}
+        {litige.status !== 'resolu' && (
+          <button type="button" disabled={envoi} onClick={() => agir('resolu')} className="min-h-11 rounded-xl bg-ok px-4 font-bold text-white disabled:opacity-60">
+            Marquer résolu
+          </button>
+        )}
+        {litige.commission_retenue > 0 && (
+          <button type="button" disabled={envoi} onClick={() => agir('rembourser')} className="min-h-11 rounded-xl border-2 border-accent bg-white px-4 font-bold text-accent disabled:opacity-60">
+            Rembourser la commission ({litige.commission_retenue} DH)
+          </button>
+        )}
+      </div>
+    </li>
+  )
+}
+
+function LitigesAdmin() {
+  const [etat, setEtat] = useState({ charge: false, litiges: [], erreur: null })
+  const [version, setVersion] = useState(0)
+
+  useEffect(() => {
+    let actif = true
+    chargerLitigesAdmin().then(({ litiges, erreur }) => {
+      if (actif) setEtat({ charge: true, litiges: litiges ?? [], erreur: erreur ?? null })
+    })
+    return () => {
+      actif = false
+    }
+  }, [version])
+
+  const aTraiter = etat.litiges.filter((l) => l.status !== 'resolu').length
+
+  return (
+    <section className="flex flex-col gap-1 rounded-card border border-line bg-white p-5 shadow-card">
+      <h2 className="flex items-center gap-2 text-xl">
+        <TriangleAlert className="h-5 w-5 text-danger" strokeWidth={2.5} aria-hidden="true" />
+        Litiges {etat.charge && <span className="font-normal text-muted">({aTraiter} à traiter)</span>}
+      </h2>
+      {!etat.charge && <p className="text-muted">Chargement…</p>}
+      {etat.erreur && <MessageErreur>{etat.erreur}</MessageErreur>}
+      {etat.charge && !etat.erreur && etat.litiges.length === 0 && <p className="text-muted">Aucun litige pour le moment.</p>}
+      <ul className="flex flex-col divide-y divide-line">
+        {etat.litiges.map((l) => <CarteLitige key={`${l.id}-${l.status}`} litige={l} surChangement={() => setVersion((v) => v + 1)} />)}
+      </ul>
+    </section>
+  )
+}
 
 // Tableau de bord administrateur (US24 partie 1) : lecture seule, réservé aux comptes de private.admins.
 // La base refuse les chiffres à tout autre compte (fonction tableau_admin) ; aucun téléphone ni adresse (RG08).
@@ -90,6 +177,8 @@ export default function Admin() {
                 ))}
               </ul>
             </section>
+
+            <LitigesAdmin />
 
             <div className="grid items-start gap-5 md:grid-cols-2">
               <section className="flex flex-col gap-3 rounded-card border border-line bg-white p-5 shadow-card">

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { chargerAdresseDemande, lienCarte } from '../lib/adresses'
 import { libelleJourCreneau } from '../lib/dates'
 import { Avatar } from './PhotoProfil'
+import SignalerProbleme from './SignalerProbleme'
 
 const TAUX_COMMISSION = 0.14 // commission simulée (RG13, US15) : taux défini par l'équipe
 
@@ -132,6 +133,9 @@ export default function MiseEnRelation({ idAutre, role, demande, prix }) {
             : ' La mise en relation est gratuite pour vous.'}
         </p>
       </div>
+
+      {/* US25 : signaler un problème à Mawkaf (litige), tant que la demande est attribuée ou terminée */}
+      {['attribuee', 'terminee'].includes(demande.status) && <SignalerProbleme demande={demande} />}
     </div>
   )
 }
