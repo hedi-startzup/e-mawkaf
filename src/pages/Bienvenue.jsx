@@ -95,7 +95,7 @@ export default function Bienvenue() {
           <img
             src="/illustrations/artisans-riad.jpg"
             alt="Artisans au travail dans une maison marocaine : électricien, peintre, menuisier et carreleur"
-            className="mx-auto aspect-[4/5] w-full max-w-[19rem] rounded-card object-cover shadow-card md:max-w-[24rem]"
+            className="mx-auto h-auto w-full max-w-[17rem] rounded-card shadow-card md:max-w-[21rem]"
           />
         </section>
 

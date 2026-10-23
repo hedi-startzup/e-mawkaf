@@ -55,7 +55,7 @@ export default function Inscription() {
   const parEmail = form.modeIdentifiant === 'email'
 
   return (
-    <CadreVisiteur>
+    <CadreVisiteur illustration="artisans">
       <Titre>Créer un compte</Titre>
 
       <form onSubmit={envoyer} noValidate className="flex flex-col gap-6">
