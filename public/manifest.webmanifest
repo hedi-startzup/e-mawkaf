@@ -1,0 +1,17 @@
+{
+  "name": "Mawkaf",
+  "short_name": "Mawkaf",
+  "description": "Trouvez un artisan près de chez vous au Maroc, au prix que vous proposez.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fafaf9",
+  "theme_color": "#f2e3c6",
+  "icons": [
+    { "src": "/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icone-512-adaptative.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
