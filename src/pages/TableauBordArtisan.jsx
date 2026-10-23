@@ -6,7 +6,7 @@ import {
 import Disponibilite from '../components/Disponibilite'
 import { Epingle } from '../components/Marque'
 import { MessageErreur, Tuile } from '../components/ui'
-import { libelleJour } from '../lib/dates'
+import { libelleJourCreneau } from '../lib/dates'
 import { chargerFilArtisan, texteNote } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 import { chargerConversations } from '../lib/messages'
@@ -58,7 +58,7 @@ function Missions({ missions, noms }) {
             <p className="truncate font-bold">{demande.metier?.label} · {noms.get(demande.id) || 'Client'}</p>
             <p className="flex items-center gap-1.5 text-sm text-muted">
               <CalendarDays className="h-4 w-4 text-brand" strokeWidth={2.5} aria-hidden="true" />
-              {libelleJour(demande.service_date)} · <span className="font-bold text-accent">{price} DH</span>
+              {libelleJourCreneau(demande.service_date, demande.time_slot)} · <span className="font-bold text-accent">{price} DH</span>
             </p>
           </div>
           <div className="flex w-full gap-2 sm:w-auto">
@@ -90,7 +90,7 @@ function DernieresDemandes({ demandes }) {
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold">{d.metier.label}</p>
               <p className="truncate text-sm text-muted">
-                {[d.district, libelleJour(d.service_date)].filter(Boolean).join(' · ')} · {d.nbOffres} offre{d.nbOffres > 1 ? 's' : ''}
+                {[d.district, libelleJourCreneau(d.service_date, d.time_slot)].filter(Boolean).join(' · ')} · {d.nbOffres} offre{d.nbOffres > 1 ? 's' : ''}
               </p>
             </div>
             <span className="shrink-0 font-display font-bold text-accent">

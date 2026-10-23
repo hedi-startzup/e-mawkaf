@@ -4,7 +4,7 @@ import { CalendarDays, ChevronRight } from 'lucide-react'
 import BoutonActualiser from '../components/BoutonActualiser'
 import { Epingle, Etoile } from '../components/Marque'
 import { MessageErreur } from '../components/ui'
-import { libelleJour } from '../lib/dates'
+import { libelleJourCreneau } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { STATUTS_OFFRE, chargerMesOffres } from '../lib/offres'
 import { useSession } from '../lib/session'
@@ -91,7 +91,7 @@ function CarteOffre({ offre }) {
         {demande && (
           <span className="inline-flex items-center gap-1.5">
             <CalendarDays className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
-            {libelleJour(demande.service_date)}
+            {libelleJourCreneau(demande.service_date, demande.time_slot)}
           </span>
         )}
       </div>

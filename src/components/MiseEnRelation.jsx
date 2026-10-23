@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { Banknote, MapPinned, MessageCircle, MessagesSquare, Phone } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { chargerAdresseDemande, lienCarte } from '../lib/adresses'
-import { libelleJour } from '../lib/dates'
+import { libelleJourCreneau } from '../lib/dates'
 import { Avatar } from './PhotoProfil'
 
 const TAUX_COMMISSION = 0.14 // commission simulée (RG13, US15) : taux défini par l'équipe
@@ -54,8 +54,8 @@ export default function MiseEnRelation({ idAutre, role, demande, prix }) {
   const metier = demande.metier?.label ?? 'votre demande'
   const message =
     role === 'artisan'
-      ? `Bonjour, je suis l'artisan retenu sur Mawkaf pour votre demande « ${metier} » (${libelleJour(demande.service_date).toLowerCase()}) : ${demande.description}`
-      : `Bonjour, je vous ai choisi sur Mawkaf pour ma demande « ${metier} » (${libelleJour(demande.service_date).toLowerCase()}) : ${demande.description}`
+      ? `Bonjour, je suis l'artisan retenu sur Mawkaf pour votre demande « ${metier} » (${libelleJourCreneau(demande.service_date, demande.time_slot).toLowerCase()}) : ${demande.description}`
+      : `Bonjour, je vous ai choisi sur Mawkaf pour ma demande « ${metier} » (${libelleJourCreneau(demande.service_date, demande.time_slot).toLowerCase()}) : ${demande.description}`
   const commission = Math.round(prix * TAUX_COMMISSION)
 
   return (

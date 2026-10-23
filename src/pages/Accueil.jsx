@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { CalendarDays, Check, ChevronRight, ClipboardList, Handshake, Inbox, MessagesSquare, Plus, X } from 'lucide-react'
 import { Epingle, Etoile } from '../components/Marque'
-import { libelleJour } from '../lib/dates'
+import { libelleJourCreneau } from '../lib/dates'
 import { STATUTS_DEMANDE, annulable, annulerDemande, chargerMesDemandes } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 import { chargerConversations } from '../lib/messages'
@@ -96,7 +96,7 @@ function CarteDemande({ demande, surAnnulee }) {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted">
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
-          {libelleJour(demande.service_date)}
+          {libelleJourCreneau(demande.service_date, demande.time_slot)}
         </span>
         {lieu && (
           <span className="inline-flex min-w-0 items-center gap-1.5">
