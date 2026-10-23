@@ -1,8 +1,9 @@
 import { createElement, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { ArrowLeft, ArrowRight, Banknote, CalendarDays, Check, ChevronDown, Pencil, Send, Sun, Sunrise } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Banknote, CalendarDays, Check, ChevronDown, House, MapPinned, Pencil, Send, Sun, Sunrise } from 'lucide-react'
 import { Epingle } from '../components/Marque'
 import { Bouton, Champ, Choix, MessageErreur, Titre } from '../components/ui'
+import { ADRESSE_MAX, chargerAdresseMaison, erreurAdresse } from '../lib/adresses'
 import { aujourdhuiCasablanca, demainCasablanca } from '../lib/dates'
 import { chargerMetiersDemande, publierDemande } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
@@ -20,9 +21,18 @@ const JOURS = [
 
 const ETAPES = ['Détails', 'Date & prix', 'Récapitulatif']
 
+// US26 : adresse enregistrée (« Maison ») ou autre adresse pour cette demande seulement
+const TYPES_ADRESSE = [
+  { valeur: 'maison', label: 'Maison', icone: House },
+  { valeur: 'autre', label: 'Autre adresse', icone: MapPinned },
+]
+
 // Champs vérifiés à chaque étape, avec leur fonction de validation (src/lib/validation.js)
 const VERIFICATIONS = {
-  1: { metier: erreurMetier, description: erreurDescription, arrondissement: erreurArrondissement, quartier: erreurQuartier },
+  1: {
+    metier: erreurMetier, description: erreurDescription, arrondissement: erreurArrondissement, quartier: erreurQuartier,
+    adresse: erreurAdresse,
+  },
   2: { prix: erreurPrixFacultatif },
 }
 
@@ -89,7 +99,10 @@ export default function PublierDemande() {
   const [etape, setEtape] = useState(1)
   const [form, setForm] = useState({
     metier: '', description: '', ville: profil.city || 'Casablanca', arrondissement: '', quartier: '', jour: 'aujourdhui', prix: '',
+    typeAdresse: 'maison', adresse: '',
   })
+  // Adresse « Maison » enregistrée dans Paramètres (vide si le client n'en a pas encore)
+  const [adresseMaison, setAdresseMaison] = useState('')
   const [erreurs, setErreurs] = useState({})
   const [erreurGenerale, setErreurGenerale] = useState(null)
   const [envoi, setEnvoi] = useState(false)
@@ -102,6 +115,20 @@ export default function PublierDemande() {
       else setMetiers(liste)
     })
   }, [])
+
+  useEffect(() => {
+    chargerAdresseMaison(profil.id).then(({ adresse }) => {
+      if (!adresse) return
+      setAdresseMaison(adresse)
+      setForm((f) => (f.typeAdresse === 'maison' && !f.adresse ? { ...f, adresse } : f))
+    })
+  }, [profil.id])
+
+  // « Maison » reprend l'adresse enregistrée ; « Autre adresse » part d'un champ vide
+  function choisirTypeAdresse(type) {
+    setForm((f) => ({ ...f, typeAdresse: type, adresse: type === 'maison' ? adresseMaison : '' }))
+    setErreurs((e) => ({ ...e, adresse: null }))
+  }
 
   function changer(champ, valeur) {
     setForm((f) => ({ ...f, [champ]: valeur }))
@@ -142,6 +169,8 @@ export default function PublierDemande() {
       ...form,
       idClient: profil.id,
       jour: form.jour === 'demain' ? demainCasablanca() : aujourdhuiCasablanca(),
+      // « Maison » choisie sans adresse enregistrée : on l'enregistre pour la prochaine fois
+      enregistrerMaison: form.typeAdresse === 'maison' && !adresseMaison,
     })
     setEnvoi(false)
     if (erreur) return setErreurGenerale(erreur)
@@ -252,6 +281,32 @@ export default function PublierDemande() {
               )}
               <Champ id="quartier" label="Quartier (facultatif)" maxLength={QUARTIER_MAX} placeholder="Exemple : Racine"
                 value={form.quartier} onChange={(e) => changer('quartier', e.target.value)} erreur={erreurs.quartier} />
+
+              {/* US26 : adresse exacte, montrée seulement à l'artisan retenu, après attribution */}
+              <Choix legende="Adresse de l'intervention" options={TYPES_ADRESSE} valeur={form.typeAdresse} onChange={choisirTypeAdresse} />
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="adresse" className="flex items-end justify-between gap-3 font-bold">
+                  {form.typeAdresse === 'maison' ? 'Mon adresse' : 'Adresse pour cette demande'}
+                  <span className="text-sm font-normal tabular-nums text-muted">{form.adresse.trim().length} / {ADRESSE_MAX}</span>
+                </label>
+                <textarea
+                  id="adresse"
+                  rows={2}
+                  maxLength={ADRESSE_MAX}
+                  placeholder="Exemple : 12 rue Ibnou Mounir, immeuble B, 3e étage, appt 7"
+                  value={form.adresse}
+                  aria-invalid={Boolean(erreurs.adresse)}
+                  onChange={(e) => changer('adresse', e.target.value)}
+                  className="champ h-auto py-3"
+                />
+                <p className="text-muted">
+                  {form.typeAdresse === 'maison' && !adresseMaison
+                    ? 'Elle sera enregistrée pour vos prochaines demandes. '
+                    : ''}
+                  Seul l'artisan que vous choisirez la verra.
+                </p>
+                <MessageChamp>{erreurs.adresse}</MessageChamp>
+              </div>
             </div>
           </>
         )}
@@ -284,6 +339,9 @@ export default function PublierDemande() {
                 <Epingle className="h-5 w-4" />
                 {[form.quartier.trim(), form.arrondissement, form.ville].filter(Boolean).join(', ')}
               </span>
+            </LigneRecap>
+            <LigneRecap libelle="Adresse" surModifier={() => allerA(1)}>
+              <span className="break-words">{form.adresse.trim()}</span>
             </LigneRecap>
             <LigneRecap libelle="Jour" surModifier={() => allerA(2)}>
               <span className="inline-flex items-center gap-1.5">

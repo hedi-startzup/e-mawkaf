@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { Banknote, MessageCircle, MessagesSquare, Phone } from 'lucide-react'
+import { Banknote, MapPinned, MessageCircle, MessagesSquare, Phone } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { chargerAdresseDemande, lienCarte } from '../lib/adresses'
 import { libelleJour } from '../lib/dates'
 import { Avatar } from './PhotoProfil'
 
@@ -24,29 +25,31 @@ function numeroLisible(telephone) {
 // Le numéro n'est lisible qu'entre le client et l'artisan retenu : c'est la base qui le garantit
 // (RLS de contacts, RG08). Si elle refuse, on n'affiche pas de numéro.
 export default function MiseEnRelation({ idAutre, role, demande, prix }) {
-  const [etat, setEtat] = useState({ charge: false, nom: '', photo: null, telephone: null })
+  const [etat, setEtat] = useState({ charge: false, nom: '', photo: null, telephone: null, adresse: null })
 
   useEffect(() => {
     let actif = true
     Promise.all([
       supabase.from('profiles').select('full_name, avatar_path').eq('id', idAutre).maybeSingle(),
       supabase.from('contacts').select('phone').eq('user_id', idAutre).maybeSingle(),
-    ]).then(([profil, contact]) => {
+      chargerAdresseDemande(demande.id), // US26 : même règle que le téléphone
+    ]).then(([profil, contact, adresse]) => {
       if (actif) {
         setEtat({
           charge: true,
           nom: profil.data?.full_name ?? '',
           photo: profil.data?.avatar_path ?? null,
           telephone: contact.data?.phone ?? null,
+          adresse,
         })
       }
     })
     return () => {
       actif = false
     }
-  }, [idAutre])
+  }, [idAutre, demande.id])
 
-  const { charge, nom, photo, telephone } = etat
+  const { charge, nom, photo, telephone, adresse } = etat
   const titre = role === 'artisan' ? 'Votre client' : 'Votre artisan'
   const metier = demande.metier?.label ?? 'votre demande'
   const message =
@@ -77,6 +80,23 @@ export default function MiseEnRelation({ idAutre, role, demande, prix }) {
           ) : (
             <p className="text-muted">Numéro indisponible pour le moment.</p>
           )}
+        </div>
+      )}
+
+      {/* US26 : adresse exacte de l'intervention, lisible seulement après attribution */}
+      {charge && adresse && (
+        <div className="flex flex-col gap-2 rounded-xl bg-white p-3">
+          <p className="text-muted">Adresse de l'intervention</p>
+          <p className="break-words font-bold text-ink">{adresse}</p>
+          <a
+            href={lienCarte(adresse, demande.city)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-brand bg-white px-4 font-bold text-brand hover:bg-brand-light active:scale-[0.98]"
+          >
+            <MapPinned className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+            Ouvrir dans Maps
+          </a>
         </div>
       )}
 
