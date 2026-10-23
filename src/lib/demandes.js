@@ -13,7 +13,7 @@ export async function chargerMetiersDemande() {
 }
 
 // Publie une demande (US05). La base vérifie aussi les règles (RLS, dates, prix).
-export async function publierDemande({ idClient, metier, description, ville, arrondissement, quartier, jour, prix, adresse, enregistrerMaison }) {
+export async function publierDemande({ idClient, metier, description, ville, arrondissement, quartier, jour, creneau, prix, adresse, enregistrerMaison }) {
   const { data, error } = await supabase.from('requests').insert({
     client_id: idClient,
     trade: metier,
@@ -22,6 +22,7 @@ export async function publierDemande({ idClient, metier, description, ville, arr
     district: arrondissement || null,
     neighborhood: quartier.trim() || null,
     service_date: jour,
+    time_slot: creneau, // US20 : matin, apres_midi ou soir
     proposed_price: prix.trim() ? Number(prix) : null, // vide = demande de devis (RG04)
   }).select('id').single()
   if (!error) {
@@ -49,7 +50,7 @@ export const STATUTS_DEMANDE = {
 }
 
 const COLONNES_DEMANDE =
-  'id, description, city, district, neighborhood, service_date, proposed_price, status, accepted_offer_id, created_at, metier:trades(label, icon)'
+  'id, description, city, district, neighborhood, service_date, time_slot, proposed_price, status, accepted_offer_id, created_at, metier:trades(label, icon)'
 
 // Demandes du client connecté, les plus récentes en premier (la RLS ne renvoie que les siennes)
 export async function chargerMesDemandes(idClient) {
@@ -139,6 +140,10 @@ export async function choisirOffre(idOffre) {
   const texte = error.message ?? ''
   if (texte.includes("n'est plus ouverte")) return { erreur: 'Cette demande a déjà une offre choisie ou a été annulée. Rechargez la page.' }
   if (texte.includes("n'est plus disponible")) return { erreur: "L'artisan a retiré ou modifié cette offre. Rechargez la page pour voir les offres à jour." }
+  // US20 : la base refuse un artisan déjà retenu le même jour, au même créneau
+  if (texte.includes('déjà retenu sur ce créneau')) {
+    return { erreur: 'Cet artisan est déjà retenu ailleurs sur ce créneau (même jour, même moment). Choisissez une autre offre.' }
+  }
   return { erreur: "L'offre n'a pas pu être choisie. Vérifiez votre connexion et réessayez." }
 }
 
@@ -193,7 +198,7 @@ export async function chargerFilArtisan(profil) {
   const [reponseDemandes, reponseMetiers] = await Promise.all([
     supabase
       .from('requests')
-      .select('id, trade, description, city, district, neighborhood, service_date, proposed_price, created_at')
+      .select('id, trade, description, city, district, neighborhood, service_date, time_slot, proposed_price, created_at')
       .eq('status', 'ouverte')
       .in('city', [profil.city, ...(profil.nearby_cities ?? [])]) // US27 : sa ville + ses villes voisines
       .in('service_date', profil.available_today ? [aujourdhuiCasablanca(), demainCasablanca()] : [demainCasablanca()])

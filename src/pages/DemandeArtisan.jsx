@@ -5,7 +5,7 @@ import BoutonActualiser from '../components/BoutonActualiser'
 import { Epingle } from '../components/Marque'
 import MiseEnRelation from '../components/MiseEnRelation'
 import { Bouton, Champ, MessageErreur } from '../components/ui'
-import { libelleJour } from '../lib/dates'
+import { libelleJourCreneau } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { STATUTS_OFFRE, chargerDemandeEtMonOffre, envoyerOffre, retirerOffre } from '../lib/offres'
 import { useSession } from '../lib/session'
@@ -90,7 +90,7 @@ function Resume({ demande }) {
         </span>
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
-          {libelleJour(demande.service_date)}
+          {libelleJourCreneau(demande.service_date, demande.time_slot)}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <MessageSquareText className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />

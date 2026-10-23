@@ -6,7 +6,7 @@ import Cloture from '../components/Cloture'
 import { Epingle, Etoile } from '../components/Marque'
 import MiseEnRelation from '../components/MiseEnRelation'
 import { Avatar } from '../components/PhotoProfil'
-import { libelleJour } from '../lib/dates'
+import { libelleJourCreneau } from '../lib/dates'
 import { STATUTS_DEMANDE, chargerDetailDemande, choisirOffre, texteNote } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 import { STATUTS_OFFRE } from '../lib/offres'
@@ -37,7 +37,7 @@ function ResumeDemande({ demande }) {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted">
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
-          {libelleJour(demande.service_date)}
+          {libelleJourCreneau(demande.service_date, demande.time_slot)}
         </span>
         {lieu && (
           <span className="inline-flex min-w-0 items-center gap-1.5">

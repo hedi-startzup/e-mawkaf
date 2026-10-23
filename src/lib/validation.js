@@ -81,6 +81,12 @@ export function erreurQuartier(quartier) {
   return null
 }
 
+// US20 : créneau obligatoire pour une nouvelle demande
+export function erreurCreneau(creneau) {
+  if (!['matin', 'apres_midi', 'soir'].includes(creneau)) return 'Créneau : touchez Matin, Après-midi ou Soir.'
+  return null
+}
+
 // RG04 : prix facultatif pour une demande, entier entre 50 et 5 000 DH
 export function erreurPrixFacultatif(prix) {
   const valeur = prix.trim()

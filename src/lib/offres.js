@@ -12,7 +12,7 @@ export const STATUTS_OFFRE = {
 }
 
 const COLONNES_DEMANDE =
-  'id, client_id, trade, description, city, district, neighborhood, service_date, proposed_price, status, created_at, metier:trades(label, icon)'
+  'id, client_id, trade, description, city, district, neighborhood, service_date, time_slot, proposed_price, status, created_at, metier:trades(label, icon)'
 
 // Traduit les erreurs de la base : jamais de message technique brut à l'écran.
 function messageErreur(error) {

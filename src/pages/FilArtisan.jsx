@@ -2,7 +2,7 @@ import { createElement, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { CalendarDays, ChevronRight, MessageSquareText, Search, UserRound } from 'lucide-react'
 import { chargerFilArtisan } from '../lib/demandes'
-import { aujourdhuiCasablanca, demainCasablanca, libelleJour } from '../lib/dates'
+import { aujourdhuiCasablanca, demainCasablanca, libelleJourCreneau } from '../lib/dates'
 import { iconeMetier } from '../lib/icones'
 import { Epingle, Etoile } from '../components/Marque'
 
@@ -188,7 +188,7 @@ function CarteDemande({ demande, maVille }) {
         </span>
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
-          {libelleJour(demande.service_date)}
+          {libelleJourCreneau(demande.service_date, demande.time_slot)}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <MessageSquareText className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />

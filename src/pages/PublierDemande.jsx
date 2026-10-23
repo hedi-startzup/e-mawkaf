@@ -1,22 +1,29 @@
 import { createElement, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { ArrowLeft, ArrowRight, Banknote, CalendarDays, Check, ChevronDown, House, MapPinned, Pencil, Send, Sun, Sunrise } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Banknote, CalendarDays, Check, ChevronDown, Clock, House, MapPinned, Moon, Pencil, Send, Sun, Sunrise, Sunset } from 'lucide-react'
 import { Epingle } from '../components/Marque'
 import { Bouton, Champ, Choix, MessageErreur, Titre } from '../components/ui'
 import { ADRESSE_MAX, chargerAdresseMaison, erreurAdresse } from '../lib/adresses'
-import { aujourdhuiCasablanca, demainCasablanca } from '../lib/dates'
+import { CRENEAUX, aujourdhuiCasablanca, demainCasablanca } from '../lib/dates'
 import { chargerMetiersDemande, publierDemande } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
 import { VILLES, arrondissementsDe } from '../lib/quartiers'
 import { useSession } from '../lib/session'
 import {
-  DESCRIPTION_MAX, QUARTIER_MAX, erreurArrondissement, erreurDescription, erreurMetier,
+  DESCRIPTION_MAX, QUARTIER_MAX, erreurArrondissement, erreurCreneau, erreurDescription, erreurMetier,
   erreurPrixFacultatif, erreurQuartier,
 } from '../lib/validation'
 
 const JOURS = [
   { valeur: 'aujourdhui', label: "Aujourd'hui", icone: Sun },
   { valeur: 'demain', label: 'Demain', icone: Sunrise },
+]
+
+// US20 : créneau de l'intervention
+const CHOIX_CRENEAUX = [
+  { valeur: 'matin', label: CRENEAUX.matin, icone: Sunrise },
+  { valeur: 'apres_midi', label: CRENEAUX.apres_midi, icone: Sunset },
+  { valeur: 'soir', label: CRENEAUX.soir, icone: Moon },
 ]
 
 const ETAPES = ['Détails', 'Date & prix', 'Récapitulatif']
@@ -33,7 +40,7 @@ const VERIFICATIONS = {
     metier: erreurMetier, description: erreurDescription, arrondissement: erreurArrondissement, quartier: erreurQuartier,
     adresse: erreurAdresse,
   },
-  2: { prix: erreurPrixFacultatif },
+  2: { creneau: erreurCreneau, prix: erreurPrixFacultatif },
 }
 
 function MessageChamp({ id, children }) {
@@ -98,7 +105,7 @@ export default function PublierDemande() {
   const [erreurMetiers, setErreurMetiers] = useState(null)
   const [etape, setEtape] = useState(1)
   const [form, setForm] = useState({
-    metier: '', description: '', ville: profil.city || 'Casablanca', arrondissement: '', quartier: '', jour: 'aujourdhui', prix: '',
+    metier: '', description: '', ville: profil.city || 'Casablanca', arrondissement: '', quartier: '', jour: 'aujourdhui', creneau: '', prix: '',
     typeAdresse: 'maison', adresse: '',
   })
   // Adresse « Maison » enregistrée dans Paramètres (vide si le client n'en a pas encore)
@@ -314,6 +321,8 @@ export default function PublierDemande() {
         {etape === 2 && (
           <>
             <Choix legende="Pour quand ?" options={JOURS} valeur={form.jour} onChange={(v) => changer('jour', v)} />
+            <Choix legende="À quel moment ?" options={CHOIX_CRENEAUX} valeur={form.creneau}
+              onChange={(v) => changer('creneau', v)} erreur={erreurs.creneau} />
 
             <Champ id="prix" label="Prix proposé en DH (facultatif)" icone={Banknote} inputMode="numeric"
               placeholder="Exemple : 150" value={form.prix}
@@ -347,6 +356,12 @@ export default function PublierDemande() {
               <span className="inline-flex items-center gap-1.5">
                 <CalendarDays className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
                 {form.jour === 'demain' ? 'Demain' : "Aujourd'hui"}
+              </span>
+            </LigneRecap>
+            <LigneRecap libelle="Créneau" surModifier={() => allerA(2)}>
+              <span className="inline-flex items-center gap-1.5">
+                <Clock className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
+                {CRENEAUX[form.creneau]}
               </span>
             </LigneRecap>
             <LigneRecap libelle="Prix" surModifier={() => allerA(2)}>
