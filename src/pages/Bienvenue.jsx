@@ -1,7 +1,6 @@
 import { createElement, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ArrowRightLeft, ChevronDown, Search, ShieldCheck, ShieldHalf, UserSearch } from 'lucide-react'
-import { ArtisanMaison } from '../components/Illustrations'
 import { Logo, Zellige } from '../components/Marque'
 import { chargerMetiersDemande } from '../lib/demandes'
 import { iconeMetier } from '../lib/icones'
@@ -89,12 +88,15 @@ export default function Bienvenue() {
 
             <p className="text-muted">
               Vous êtes artisan ?{' '}
-              <Link to="/inscription" className="font-bold text-brand underline">Recevez des demandes à Casablanca</Link>
+              <Link to="/inscription" className="font-bold text-brand underline">Recevez des demandes près de chez vous</Link>
             </p>
           </div>
 
-          {/* Illustration dessinée en SVG : nette à toutes les tailles */}
-          <ArtisanMaison className="mx-auto w-full max-w-[19rem] md:max-w-[24rem]" />
+          <img
+            src="/illustrations/artisans-riad.jpg"
+            alt="Artisans au travail dans une maison marocaine : électricien, peintre, menuisier et carreleur"
+            className="mx-auto aspect-[4/5] w-full max-w-[19rem] rounded-card object-cover shadow-card md:max-w-[24rem]"
+          />
         </section>
 
         <ul className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-card border border-line bg-white px-4 py-6 shadow-card md:grid-cols-4 md:py-5">

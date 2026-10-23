@@ -1,6 +1,5 @@
 // Éléments d'identité visuelle : logo, étoile marocaine décorative, épingle de lieu.
 import { Link } from 'react-router'
-import { MosqueeHassanII } from './Illustrations'
 
 // Logo : le symbole (sans texte) + le mot « Mawkaf » ajouté à côté (Règles visuelles).
 export function Logo({ grand = false }) {
@@ -63,7 +62,7 @@ export function Epingle({ className = '' }) {
 }
 
 // Cadre des pages visiteur (connexion, inscription), comme la maquette : sur ordinateur, une carte
-// en deux colonnes avec le formulaire à gauche et, à droite, le logo, l'accroche et la mosquée Hassan II.
+// en deux colonnes avec le formulaire à gauche et, à droite, le logo, l'accroche et l'illustration de l'électricien.
 export function CadreVisiteur({ children }) {
   return (
     <main className="min-h-screen w-full px-4 py-8 md:grid md:place-items-center md:py-12">
@@ -71,18 +70,26 @@ export function CadreVisiteur({ children }) {
         <div className="flex flex-col gap-6 md:p-10">
           <Link to="/" aria-label="Accueil Mawkaf" className="self-start"><Logo /></Link>
           {children}
-          <MosqueeHassanII className="-mx-4 mt-2 w-[calc(100%+2rem)] max-w-none md:hidden" />
+          <img
+            src="/illustrations/electricien-riad.jpg"
+            alt="Électricien au travail dans une maison marocaine"
+            className="mt-2 h-56 w-full rounded-card object-cover object-[40%_50%] md:hidden"
+          />
         </div>
         <div className="relative hidden flex-col overflow-hidden bg-creme md:flex">
           <Zellige className="absolute -right-1 -top-1 h-24 w-24" />
           <div className="relative flex flex-1 flex-col items-center justify-center px-10 pt-20 text-center">
             <Logo />
             <p className="mt-4 max-w-xs font-display text-lg font-bold leading-snug text-ink">
-              Des artisans de confiance à Casablanca
+              Des artisans de confiance partout au Maroc
             </p>
             <p className="mt-2 text-muted">Artisans à la journée · Prix en DH</p>
           </div>
-          <MosqueeHassanII className="relative w-full" />
+          <img
+            src="/illustrations/electricien-riad.jpg"
+            alt="Électricien au travail dans une maison marocaine"
+            className="relative mt-8 h-80 w-full object-cover object-[40%_50%]"
+          />
         </div>
       </div>
     </main>
