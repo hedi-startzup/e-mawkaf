@@ -118,14 +118,16 @@ export default function Bienvenue() {
                 const IconeMetier = iconeMetier(m.icon)
                 return (
                   <li key={m.id}>
+                    {/* Sur téléphone, picto au-dessus du nom : les noms longs (« Électroménager »,
+                        « Déménagement et manutention ») ne débordent plus de la case, même en grande police */}
                     <Link
                       to="/inscription"
-                      className="flex min-h-14 items-center gap-3 rounded-xl border border-line bg-white p-3 font-bold hover:border-accent"
+                      className="flex h-full min-h-14 flex-col items-center justify-center gap-2 rounded-xl border border-line bg-white p-3 text-center font-bold hover:border-accent sm:flex-row sm:justify-start sm:gap-3 sm:text-left"
                     >
                       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-light text-accent">
                         <IconeMetier className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                       </span>
-                      <span className="min-w-0 leading-tight">{m.label}</span>
+                      <span className="w-full min-w-0 leading-tight hyphens-auto [overflow-wrap:anywhere] sm:w-auto">{m.label}</span>
                     </Link>
                   </li>
                 )
