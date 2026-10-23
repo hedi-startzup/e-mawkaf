@@ -14,7 +14,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const CREDIT_DEPART = 500 // DH, recharge simulée de chaque artisan avant ses premières missions
 
-const URL = process.env.VITE_SUPABASE_URL
+const URL_SUPABASE = process.env.VITE_SUPABASE_URL
 const CLE = process.env.VITE_SUPABASE_ANON_KEY
 const MOT_DE_PASSE = process.env.DEMO_MOT_DE_PASSE
 
@@ -54,7 +54,7 @@ function aujourdhuiCasablanca(decalageJours = 0) {
 
 // Un client Supabase par personnage, sans session partagée
 function nouveauClient() {
-  return createClient(URL, CLE, { auth: { persistSession: false, autoRefreshToken: false } })
+  return createClient(URL_SUPABASE, CLE, { auth: { persistSession: false, autoRefreshToken: false } })
 }
 
 // Crée le compte, son profil et son contact (comme l'appli à la première connexion, US03)
@@ -102,7 +102,7 @@ async function publier(client, { metier, description, jour, prix, arrondissement
 }
 
 async function main() {
-  if (!URL || !CLE) arreter('VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY doivent être remplis dans .env.')
+  if (!URL_SUPABASE || !CLE) arreter('VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY doivent être remplis dans .env.')
   if (!MOT_DE_PASSE || MOT_DE_PASSE.length < 8) {
     arreter('Ajoutez DEMO_MOT_DE_PASSE=… dans .env (8 caractères au moins) : ce sera le mot de passe des comptes de démo.')
   }
