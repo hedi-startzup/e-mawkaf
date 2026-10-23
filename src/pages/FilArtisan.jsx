@@ -15,20 +15,26 @@ export default function FilArtisan({ profil, allerAuProfil }) {
   // Recharger le fil quand la ville, les métiers ou la disponibilité changent
   const { city, available_today } = profil
   const metiersCle = profil.trades.join(',')
-  const cle = `${city}|${metiersCle}|${available_today}`
+  const voisinesCle = (profil.nearby_cities ?? []).join(',') // US27
+  const cle = `${city}|${metiersCle}|${available_today}|${voisinesCle}`
   const [resultat, setResultat] = useState({ cle: null, demandes: [], erreur: '' })
   const [onglet, setOnglet] = useState('toutes')
 
   useEffect(() => {
     if (sansMetier) return
     let actif = true
-    chargerFilArtisan({ city, available_today, trades: metiersCle.split(',') }).then((r) => {
+    chargerFilArtisan({
+      city,
+      available_today,
+      trades: metiersCle.split(','),
+      nearby_cities: voisinesCle ? voisinesCle.split(',') : [],
+    }).then((r) => {
       if (actif) setResultat({ cle, ...r })
     })
     return () => {
       actif = false
     }
-  }, [cle, sansMetier, city, available_today, metiersCle])
+  }, [cle, sansMetier, city, available_today, metiersCle, voisinesCle])
 
   if (sansMetier) {
     return (
@@ -133,7 +139,7 @@ export default function FilArtisan({ profil, allerAuProfil }) {
           {demandes.map((demande) => (
             <li key={demande.id} className="h-full">
               <Link to={`/artisan/demandes/${demande.id}`} className="group block h-full rounded-card">
-                <CarteDemande demande={demande} />
+                <CarteDemande demande={demande} maVille={city} />
               </Link>
             </li>
           ))}
@@ -143,8 +149,10 @@ export default function FilArtisan({ profil, allerAuProfil }) {
   )
 }
 
-function CarteDemande({ demande }) {
-  const lieu = [demande.neighborhood, demande.district].filter(Boolean).join(', ') || 'Casablanca'
+function CarteDemande({ demande, maVille }) {
+  // US27 : la ville s'affiche quand la demande est dans une ville voisine
+  const autreVille = demande.city && demande.city !== maVille ? demande.city : null
+  const lieu = [demande.neighborhood, demande.district, autreVille].filter(Boolean).join(', ') || maVille || 'Casablanca'
   const n = demande.nbOffres
 
   return (
