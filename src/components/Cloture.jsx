@@ -35,7 +35,7 @@ function Terminer({ demande, prenom, surTerminee }) {
       <button
         type="button"
         onClick={() => setConfirmation(true)}
-        className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-ok px-6 text-lg font-bold text-white active:scale-[0.98]"
+        className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-brand px-6 text-lg font-bold text-white shadow-press hover:bg-brand-dark active:scale-[0.98]"
       >
         <CircleCheckBig className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
         Intervention terminée
@@ -44,12 +44,12 @@ function Terminer({ demande, prenom, surTerminee }) {
   }
 
   return (
-    <div role="group" aria-label="Confirmer la fin de l'intervention" className="flex flex-col gap-3 rounded-xl border-2 border-ok bg-ok-light p-3">
+    <div role="group" aria-label="Confirmer la fin de l'intervention" className="flex flex-col gap-3 rounded-xl border-2 border-brand bg-brand-light p-3">
       <p className="font-bold">L'intervention de {prenom} a bien eu lieu ?</p>
       {erreur && <p role="alert" className="font-bold text-danger">{erreur}</p>}
       <div className="grid grid-cols-2 gap-3">
         <button type="button" disabled={envoi} onClick={terminer}
-          className="min-h-12 rounded-full bg-ok px-4 font-bold text-white active:scale-[0.98] disabled:opacity-60">
+          className="min-h-12 rounded-full bg-brand px-4 font-bold text-white hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60">
           {envoi ? 'Envoi…' : "Oui, c'est terminé"}
         </button>
         <button type="button" disabled={envoi} onClick={() => { setConfirmation(false); setErreur(null) }}
