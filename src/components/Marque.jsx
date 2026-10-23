@@ -62,34 +62,37 @@ export function Epingle({ className = '' }) {
 }
 
 // Cadre des pages visiteur (connexion, inscription), comme la maquette : sur ordinateur, une carte
-// en deux colonnes avec le formulaire à gauche et, à droite, le logo, l'accroche et l'illustration de l'électricien.
-export function CadreVisiteur({ children }) {
+// en deux colonnes avec le formulaire à gauche et, à droite, le logo, l'accroche et une illustration :
+// l'électricien par défaut (connexion), le groupe d'artisans pour l'inscription.
+const ILLUSTRATIONS_VISITEUR = {
+  electricien: { src: '/illustrations/electricien-riad.jpg', alt: 'Électricien au travail dans une maison marocaine', position: 'object-[40%_50%]' },
+  artisans: {
+    src: '/illustrations/artisans-riad.jpg',
+    alt: 'Artisans au travail dans une maison marocaine : électricien, peintre, menuisier et carreleur',
+    position: 'object-[50%_40%]',
+  },
+}
+
+export function CadreVisiteur({ children, illustration = 'electricien' }) {
+  const image = ILLUSTRATIONS_VISITEUR[illustration] ?? ILLUSTRATIONS_VISITEUR.electricien
   return (
     <main className="min-h-screen w-full px-4 py-8 md:grid md:place-items-center md:py-12">
       <div className="mx-auto w-full max-w-md md:grid md:max-w-4xl md:grid-cols-2 md:overflow-hidden md:rounded-card md:border md:border-line md:bg-white md:shadow-card">
         <div className="flex flex-col gap-6 md:p-10">
           <Link to="/" aria-label="Accueil Mawkaf" className="self-start"><Logo /></Link>
           {children}
-          <img
-            src="/illustrations/electricien-riad.jpg"
-            alt="Électricien au travail dans une maison marocaine"
-            className="mt-2 h-56 w-full rounded-card object-cover object-[40%_50%] md:hidden"
-          />
+          <img src={image.src} alt={image.alt} className={`mt-2 h-56 w-full rounded-card object-cover ${image.position} md:hidden`} />
         </div>
         <div className="relative hidden flex-col overflow-hidden bg-creme md:flex">
           <Zellige className="absolute -right-1 -top-1 h-24 w-24" />
-          <div className="relative flex flex-1 flex-col items-center justify-center px-10 pt-20 text-center">
+          <div className="relative flex flex-col items-center justify-center px-10 pb-8 pt-20 text-center">
             <Logo />
             <p className="mt-4 max-w-xs font-display text-lg font-bold leading-snug text-ink">
               Des artisans de confiance partout au Maroc
             </p>
             <p className="mt-2 text-muted">Artisans à la journée · Prix en DH</p>
           </div>
-          <img
-            src="/illustrations/electricien-riad.jpg"
-            alt="Électricien au travail dans une maison marocaine"
-            className="relative mt-8 h-80 w-full object-cover object-[40%_50%]"
-          />
+          <img src={image.src} alt={image.alt} className={`relative min-h-80 w-full flex-1 object-cover ${image.position}`} />
         </div>
       </div>
     </main>
