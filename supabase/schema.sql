@@ -49,13 +49,18 @@ create table public.profiles (
   trades         text[] not null default '{}',   -- identifiants de public.trades
   available_today boolean not null default true,
   credit_balance  integer not null default 0,      -- DH, peut être négatif (simulation US15)
+  avatar_path     text,                            -- photo dans Storage « avatars » (US23, migration 011)
+  nearby_cities   text[] not null default '{}',    -- villes voisines acceptées, 5 au plus (US27, migration 013)
   created_at      timestamptz not null default now(),
   -- RG03 : un artisan a au plus 3 métiers (0 tant que son profil n'est pas complété, US04) ;
   -- un client n'en a aucun
   constraint profiles_trades_selon_role check (
        (role = 'artisan' and cardinality(trades) <= 3)
     or (role = 'client'  and cardinality(trades) = 0)
-  )
+  ),
+  -- US23 : la photo est toujours rangée dans le dossier de son propriétaire
+  constraint profiles_avatar_dans_son_dossier check (avatar_path is null or avatar_path like id::text || '/%'),
+  constraint profiles_villes_voisines_max check (cardinality(nearby_cities) <= 5)
 );
 
 -- 1.3 contacts : téléphone, séparé du profil pour le protéger (RG02, RG08)
@@ -258,7 +263,7 @@ as $$
     where r.id = p_request_id
       and r.status = 'ouverte'
       and p.role = 'artisan'
-      and r.city = p.city
+      and (r.city = p.city or r.city = any (p.nearby_cities))     -- sa ville + ses villes voisines (US27)
       and (r.trade = any (p.trades) or t.for_artisans = false)    -- ses métiers + « Autre »
       and r.service_date between private.today_casablanca()
                              and private.today_casablanca() + 1
@@ -343,7 +348,7 @@ grant select on public.trades to authenticated;
 grant select on public.profiles to authenticated;
 grant insert (id, role, full_name, city, district, neighborhood, trades, available_today)
   on public.profiles to authenticated;
-grant update (full_name, city, district, neighborhood, trades, available_today)
+grant update (full_name, city, district, neighborhood, trades, available_today, avatar_path, nearby_cities)
   on public.profiles to authenticated;
 
 grant select, insert, update on public.contacts to authenticated;
@@ -427,6 +432,10 @@ create policy offers_insert on public.offers
   with check (
     artisan_id = (select auth.uid())
     and private.artisan_can_see_request(request_id)   -- demande ouverte et visible
+    and exists (                                      -- US23 : pas de photo, pas d'offre
+      select 1 from public.profiles p
+      where p.id = (select auth.uid()) and p.avatar_path is not null
+    )
   );
 create policy offers_update on public.offers
   for update to authenticated
@@ -552,6 +561,84 @@ revoke all on function public.nombre_offres(uuid[]) from public, anon;
 grant execute on function public.nombre_offres(uuid[]) to authenticated;
 
 -- ---------------------------------------------------------------------
+-- 7 ter. Crédit simulé : recharge et commission (US15, migration 010)
+-- ---------------------------------------------------------------------
+-- Recharge simulée (US15) : montant libre en DH entiers, de 50 à 5 000 (comme RG04), par l'artisan connecté, sans argent réel.
+-- Le crédit ne s'écrit jamais depuis l'appli : seule cette fonction l'augmente.
+create or replace function public.recharger_credit(montant integer)
+returns integer
+language plpgsql security definer
+set search_path = ''
+as $$
+declare
+  v_solde integer;
+begin
+  if montant is null or montant < 50 or montant > 5000 then
+    raise exception 'Montant de recharge invalide : entre 50 et 5 000 DH.';
+  end if;
+  if (select role from public.profiles where id = (select auth.uid())) is distinct from 'artisan' then
+    raise exception 'Seul un artisan peut recharger son crédit.';
+  end if;
+  insert into public.credit_movements (artisan_id, request_id, amount, kind)
+  values ((select auth.uid()), null, montant, 'recharge_simulee');
+  update public.profiles set credit_balance = credit_balance + montant
+  where id = (select auth.uid())
+  returning credit_balance into v_solde;
+  return v_solde;
+end;
+$$;
+
+revoke all on function public.recharger_credit(integer) from public, anon;
+grant execute on function public.recharger_credit(integer) to authenticated;
+
+-- Commission simulée de 14 % (RG13, US15) : débitée quand la demande est attribuée
+-- (choisir_offre), rendue si une demande attribuée est annulée avant le jour de l'intervention (RG09).
+-- Le solde peut devenir négatif (simulation).
+create or replace function private.mouvements_credit()
+returns trigger
+language plpgsql security definer
+set search_path = ''
+as $$
+declare
+  v_artisan    uuid;
+  v_prix       integer;
+  v_commission integer;
+  v_net        integer;
+begin
+  if old.status = 'ouverte' and new.status = 'attribuee' and new.accepted_offer_id is not null then
+    select o.artisan_id, o.price into v_artisan, v_prix
+    from public.offers o where o.id = new.accepted_offer_id;
+    v_commission := round(v_prix * 0.14)::integer;
+    insert into public.credit_movements (artisan_id, request_id, amount, kind)
+    values (v_artisan, new.id, -v_commission, 'commission');
+    update public.profiles set credit_balance = credit_balance - v_commission where id = v_artisan;
+
+  -- Remboursement seulement si l'annulation a lieu AVANT le jour de l'intervention :
+  -- évite d'annuler après le travail pour récupérer la commission (litiges : lot 3)
+  elsif old.status = 'attribuee' and new.status = 'annulee'
+        and private.today_casablanca() < new.service_date then
+    select o.artisan_id into v_artisan from public.offers o where o.id = old.accepted_offer_id;
+    -- Ce qui a été débité pour cette demande et pas encore rendu
+    select coalesce(sum(m.amount), 0) into v_net
+    from public.credit_movements m
+    where m.request_id = new.id and m.artisan_id = v_artisan
+      and m.kind in ('commission', 'remboursement');
+    if v_net < 0 then
+      insert into public.credit_movements (artisan_id, request_id, amount, kind)
+      values (v_artisan, new.id, -v_net, 'remboursement');
+      update public.profiles set credit_balance = credit_balance - v_net where id = v_artisan;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists requests_mouvements_credit on public.requests;
+create trigger requests_mouvements_credit
+  after update of status on public.requests
+  for each row execute function private.mouvements_credit();
+
+-- ---------------------------------------------------------------------
 -- 8. Realtime sur offers et requests (US10)
 -- ---------------------------------------------------------------------
 alter publication supabase_realtime add table public.offers, public.requests;
@@ -645,6 +732,94 @@ alter publication supabase_realtime add table public.messages;
 commit;
 
 -- =====================================================================
+-- US23 (migration 011) : photos de profil dans Supabase Storage
+-- Espace « avatars » privé : lisible par les utilisateurs connectés, chacun ne dépose que la sienne.
+-- =====================================================================
+begin;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', false, 1048576, array['image/jpeg', 'image/png'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+create policy avatars_select on storage.objects
+  for select to authenticated
+  using (bucket_id = 'avatars');
+create policy avatars_insert on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy avatars_update on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy avatars_delete on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+commit;
+
+-- =====================================================================
+-- US26 (migration 012) : adresse d'intervention
+-- =====================================================================
+begin;
+
+-- 1. Adresse « Maison » du client : privée
+create table public.client_addresses (
+  user_id uuid primary key references public.profiles (id) on delete cascade,
+  address text not null check (char_length(btrim(address)) between 5 and 200)
+);
+
+-- 2. Adresse exacte de chaque demande
+create table public.request_addresses (
+  request_id uuid primary key references public.requests (id) on delete cascade,
+  address    text not null check (char_length(btrim(address)) between 5 and 200)
+);
+
+-- L'artisan connecté est-il l'artisan retenu d'une demande attribuée ou terminée ?
+create or replace function private.can_see_request_address(p_request_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.requests r
+    join public.offers o on o.id = r.accepted_offer_id
+    where r.id = p_request_id
+      and r.status in ('attribuee', 'terminee')
+      and o.artisan_id = (select auth.uid())
+  );
+$$;
+
+revoke all on function private.can_see_request_address(uuid) from public;
+grant execute on function private.can_see_request_address(uuid) to authenticated;
+
+revoke all on public.client_addresses, public.request_addresses from anon, authenticated;
+grant select, insert, update on public.client_addresses to authenticated;
+grant select, insert on public.request_addresses to authenticated;
+
+alter table public.client_addresses  enable row level security;
+alter table public.request_addresses enable row level security;
+
+create policy client_addresses_select on public.client_addresses
+  for select to authenticated using (user_id = (select auth.uid()));
+create policy client_addresses_insert on public.client_addresses
+  for insert to authenticated with check (user_id = (select auth.uid()));
+create policy client_addresses_update on public.client_addresses
+  for update to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+-- Le client écrit l'adresse de sa demande (à la publication) ; il la lit, et l'artisan retenu
+-- la lit après attribution. Les autres artisans ne la voient jamais.
+create policy request_addresses_select on public.request_addresses
+  for select to authenticated
+  using (private.is_request_client(request_id) or private.can_see_request_address(request_id));
+create policy request_addresses_insert on public.request_addresses
+  for insert to authenticated
+  with check (private.is_request_client(request_id));
+
 -- US24 partie 1 (migration 014) : tableau de bord administrateur, lecture seule
 -- =====================================================================
 begin;

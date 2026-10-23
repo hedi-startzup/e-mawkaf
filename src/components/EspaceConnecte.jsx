@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router'
-import { HandCoins, House, Inbox, LogOut, MessagesSquare, Plus, Settings, UserRound } from 'lucide-react'
+import { HandCoins, House, Inbox, LogOut, MessagesSquare, Plus, Settings, UserRound, Wallet } from 'lucide-react'
 import { deconnecter } from '../lib/auth'
 import { useSession } from '../lib/session'
 import { Logo } from './Marque'
@@ -18,6 +18,7 @@ const NAVIGATION = {
     ['/artisan/fil', 'Mon fil', Inbox],
     ['/artisan/offres', 'Mes offres', HandCoins],
     ['/artisan/messages', 'Messages', MessagesSquare],
+    ['/artisan/credit', 'Mon crédit', Wallet, { mobile: false }],
     ['/artisan/profil', 'Mon profil', UserRound, { mobile: false }],
     ['/artisan/parametres', 'Paramètres', Settings, { mobile: false }],
   ],

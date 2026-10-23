@@ -5,12 +5,16 @@
 // terminer et noter. Il n'utilise que la clé publique : aucune clé secrète.
 //
 // À lancer le matin de la démo : les demandes doivent être pour aujourd'hui ou demain.
+// Les artisans reçoivent une photo fictive (scripts/photos-demo, US23) et un crédit de départ (US15).
 // Prérequis dans .env : VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY et DEMO_MOT_DE_PASSE.
 // Pour recommencer : coller supabase/nettoyage-demo.sql dans le SQL Editor de Supabase.
 
+import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 
-const URL = process.env.VITE_SUPABASE_URL
+const CREDIT_DEPART = 500 // DH, recharge simulée de chaque artisan avant ses premières missions
+
+const URL_SUPABASE = process.env.VITE_SUPABASE_URL
 const CLE = process.env.VITE_SUPABASE_ANON_KEY
 const MOT_DE_PASSE = process.env.DEMO_MOT_DE_PASSE
 
@@ -50,7 +54,7 @@ function aujourdhuiCasablanca(decalageJours = 0) {
 
 // Un client Supabase par personnage, sans session partagée
 function nouveauClient() {
-  return createClient(URL, CLE, { auth: { persistSession: false, autoRefreshToken: false } })
+  return createClient(URL_SUPABASE, CLE, { auth: { persistSession: false, autoRefreshToken: false } })
 }
 
 // Crée le compte, son profil et son contact (comme l'appli à la première connexion, US03)
@@ -74,6 +78,15 @@ async function creerCompte(cle) {
     verifier(`Profil artisan de ${compte.nom}`, await sb.from('profiles').update({
       trades: ['plomberie'], city: 'Casablanca', district: compte.quartier, available_today: true,
     }).eq('id', id))
+
+    // US23 : sans photo, un artisan ne peut pas faire d'offre. Photo fictive (initiale), pas un vrai visage.
+    const chemin = `${id}/demo.jpg`
+    const photo = readFileSync(new URL(`./photos-demo/${cle}.jpg`, import.meta.url))
+    verifier(`Photo de ${compte.nom}`, await sb.storage.from('avatars').upload(chemin, photo, { contentType: 'image/jpeg' }))
+    verifier(`Photo de ${compte.nom} (profil)`, await sb.from('profiles').update({ avatar_path: chemin }).eq('id', id))
+
+    // US15 : crédit de départ, par la recharge simulée (le solde ne s'écrit jamais directement)
+    verifier(`Crédit de départ de ${compte.nom}`, await sb.rpc('recharger_credit', { montant: CREDIT_DEPART }))
   }
   console.log(`✓ ${compte.nom} (${compte.role})`)
   return { sb, id }
@@ -89,7 +102,7 @@ async function publier(client, { metier, description, jour, prix, arrondissement
 }
 
 async function main() {
-  if (!URL || !CLE) arreter('VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY doivent être remplis dans .env.')
+  if (!URL_SUPABASE || !CLE) arreter('VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY doivent être remplis dans .env.')
   if (!MOT_DE_PASSE || MOT_DE_PASSE.length < 8) {
     arreter('Ajoutez DEMO_MOT_DE_PASSE=… dans .env (8 caractères au moins) : ce sera le mot de passe des comptes de démo.')
   }
@@ -138,7 +151,8 @@ async function main() {
    - Yasmine (cliente) : ${COMPTES.yasmine.email}
    - Karim (plombier)  : ${COMPTES.karim.email}  → 4,5 (2 avis)
    - Omar (plombier)   : ${COMPTES.omar.email}   → 4,7 (3 avis)
-   Le crédit de départ des artisans viendra avec US15.
+   Karim et Omar ont une photo fictive et ${CREDIT_DEPART} DH de crédit de départ,
+   moins les commissions simulées (14 %) de leurs missions passées.
 `)
 }
 

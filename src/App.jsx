@@ -12,6 +12,7 @@ import FilArtisan from './pages/FilArtisan'
 import Inscription from './pages/Inscription'
 import MesOffres from './pages/MesOffres'
 import Messages from './pages/Messages'
+import MonCredit from './pages/MonCredit'
 import Parametres from './pages/Parametres'
 import ProfilArtisan from './pages/ProfilArtisan'
 import PublierDemande from './pages/PublierDemande'
@@ -67,6 +68,7 @@ function App() {
             <Route path="/artisan/fil" element={<PageFilArtisan />} />
             <Route path="/artisan/demandes/:id" element={<DemandeArtisan />} />
             <Route path="/artisan/offres" element={<MesOffres />} />
+            <Route path="/artisan/credit" element={<MonCredit />} />
             <Route path="/artisan/profil" element={<PageProfilArtisan />} />
             <Route path="/artisan/messages" element={<Messages />} />
             <Route path="/artisan/parametres" element={<Parametres />} />

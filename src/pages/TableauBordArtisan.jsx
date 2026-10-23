@@ -148,10 +148,10 @@ function CarteProfil({ profil, metiers, surMiseAJour }) {
   )
 }
 
-// Crédit simulé (US15). RG13 : simulation, aucun argent réel, ni banque ni logo.
+// Crédit simulé (US15). RG13 : simulation, aucun argent réel. Recharge sur « Mon crédit ».
 function CarteCredit({ credit }) {
   return (
-    <Carte titre="Mon crédit" lien={<span className="rounded-full bg-accent-light px-2.5 py-0.5 text-sm font-bold text-accent">Simulation</span>}>
+    <Carte titre="Mon crédit" lien={<LienVoirTout to="/artisan/credit">Recharger</LienVoirTout>}>
       {credit.erreur && <MessageErreur>{credit.erreur}</MessageErreur>}
       {!credit.erreur && credit.solde === undefined && <p className="text-muted">Chargement…</p>}
       {credit.solde !== undefined && (

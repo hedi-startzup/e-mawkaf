@@ -57,11 +57,11 @@ Artisan : renseigne ses métiers → voit les demandes qui le concernent → acc
 - **RG06** Un artisan fait au plus une offre par demande ; tant que la demande est ouverte, il peut la modifier ou la retirer. « Accepter le prix » = une offre au prix proposé, possible seulement si la demande a un prix.
 - **RG07** Le client choisit une seule offre : demande `attribuee`, offre `acceptee`, les autres `refusee`. Plus aucune offre n'est possible ensuite.
 - **RG08** Les numéros de téléphone ne sont visibles qu'entre le client et l'artisan retenu, et seulement après attribution. Garanti par la base (RLS sur `contacts`), pas seulement par l'interface.
-- **RG09** Le client peut annuler une demande ouverte ou attribuée. Une demande terminée ne s'annule plus.
+- **RG09** Le client peut annuler une demande ouverte ou attribuée. Une demande terminée ne s'annule plus. La commission simulée (US15) n'est rendue à l'artisan que si l'annulation a lieu avant le jour de l'intervention (décision d'équipe du 22/10/2026, contre l'annulation abusive après le travail ; litiges en lot 3).
 - **RG10** Seul le client passe une demande attribuée à `terminee`. Il note alors l'artisan une seule fois, de 1 à 5, commentaire facultatif de 200 caractères au plus.
 - **RG11** Note d'un artisan = moyenne de ses notes arrondie au dixième, affichée avec le nombre d'avis ; « Nouveau » s'il n'en a aucun.
 - **RG12** Un artisan qui n'est pas « disponible aujourd'hui » ne voit que les demandes pour demain.
-- **RG13** Paiement en espèces entre client et artisan, hors plateforme. Mawkaf n'encaisse rien et n'affiche aucun frais au lancement. Seule exception : la simulation de la démo (US15), clairement étiquetée comme simulée, sans argent réel, sans logo ni nom de banque.
+- **RG13** Paiement en espèces entre client et artisan, hors plateforme. Mawkaf n'encaisse rien et n'affiche aucun frais au lancement. Seule exception : la simulation de la démo (US15), clairement étiquetée comme simulée, sans argent réel. Elle peut citer Wafacash (nom et logo, écran « Mon crédit » uniquement), partenaire envisagé à qui le projet sera présenté (accord de Hedi le 22/10/2026) ; aucun autre nom ni logo de banque.
 
 Contraintes de saisie : description de demande 10 à 300 caractères ; message d'offre 140 caractères au plus ; jour de la demande = aujourd'hui ou demain.
 
@@ -70,7 +70,7 @@ Huit tables. RLS activée sur chacune.
 
 | Table | Colonnes principales | Lecture | Écriture |
 |---|---|---|---|
-| `profiles` | id (= compte Supabase), role, full_name, city, district, trades (liste), available_today, credit_balance (DH entier, peut être négatif en simulation), created_at | tout utilisateur connecté | chacun son profil |
+| `profiles` | id (= compte Supabase), role, full_name, city, district, trades (liste), available_today, credit_balance (DH entier, peut être négatif en simulation), avatar_path (photo dans Storage « avatars », US23), created_at | tout utilisateur connecté | chacun son profil |
 | `contacts` | user_id, phone | soi-même, et l'autre partie d'une demande attribuée ou terminée | soi-même |
 | `trades` | id, label, icon, is_active, sort_order, for_artisans (faux pour « Autre ») | tout utilisateur connecté ; visiteurs pour les métiers actifs (page d'accueil, migration 008) | administrateur (tableau de bord Supabase) |
 | `requests` | id, client_id, trade, description, city, district, service_date, proposed_price (nullable), status, accepted_offer_id, created_at | client auteur ; artisans pour les demandes ouvertes qui les concernent ; artisan retenu | client auteur |
@@ -94,8 +94,9 @@ Huit tables. RLS activée sur chacune.
 ## Périmètre
 - **Lot 1 (garanti)** : US01 à US14, plus inscription téléphone/e-mail, table `trades`, demande « Autre » / devis, pictogrammes, interface en français, US15 (simulation de crédit et de commission 14 %).
 - **Ajouts validés par Hedi le 22/10/2026 (MAW-28, maquette)** : page d'accueil publique, tableau de bord client, demande en 3 étapes, Paramètres (nom, téléphone, mot de passe), connexion Google avec « Compléter mon profil », messagerie entre le client et l'artisan retenu après attribution (même règle que RG08).
+- **Ajouts validés par Hedi le 22/10/2026 (idées de l'équipe)** : US23 photo de profil (obligatoire pour faire une offre, facultative pour le client, lisible par les utilisateurs connectés seulement) ; US26 adresse d'intervention (adresse « Maison » dans le profil, ou « Autre adresse » à chaque demande, visible seulement par l'artisan retenu après attribution, même règle que RG08).
 - **Lot 2 (seulement si la vélocité le permet)** : US16 tarif indicatif, US17 autres villes, US18 PWA, US19 code de vérification simulé.
-- **Lot 3 (feuille de route, ne pas coder)** : photos, note vocale, messagerie avant attribution, négociation multi-tours ou directe, interface d'administration, litiges, calendrier façon Planity, carte/géolocalisation, darija/arabe, application native, notifications push, vrai paiement/portefeuille, vérification d'identité, vrai code SMS/WhatsApp.
+- **Lot 3 (feuille de route, ne pas coder)** : photos de demande (la photo de profil est validée, voir US23), note vocale, messagerie avant attribution, négociation multi-tours ou directe, interface d'administration, litiges, calendrier façon Planity, carte/géolocalisation, darija/arabe, application native, notifications push, vrai paiement/portefeuille, vérification d'identité, vrai code SMS/WhatsApp.
 
 ## Points à confirmer (ne pas trancher seul)
 - Les demandes « Autre » sont-elles visibles par tous les artisans de la ville ? (hypothèse actuelle : oui.)

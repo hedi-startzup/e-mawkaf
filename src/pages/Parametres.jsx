@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { AtSign, Check, LockKeyhole, Smartphone, UserRound } from 'lucide-react'
+import { AtSign, Check, House, LockKeyhole, Smartphone, UserRound } from 'lucide-react'
+import { ChoixPhoto } from '../components/PhotoProfil'
 import { Bouton, Champ, MessageErreur, Titre } from '../components/ui'
+import { ADRESSE_MAX, chargerAdresseMaison, enregistrerAdresseMaison, erreurAdresse } from '../lib/adresses'
 import { changerMotDePasse, chargerMonTelephone, modifierCompte } from '../lib/auth'
 import { useSession } from '../lib/session'
 import { erreurMotDePasse, erreurNom, erreurTelephone } from '../lib/validation'
@@ -85,6 +87,67 @@ function InformationsCompte() {
   )
 }
 
+// US26 : adresse « Maison » du client, proposée à chaque demande. Lui seul peut la lire.
+function AdresseMaison({ idClient }) {
+  const [adresse, setAdresse] = useState('')
+  const [erreur, setErreur] = useState(null)
+  const [erreurGenerale, setErreurGenerale] = useState(null)
+  const [message, setMessage] = useState('')
+  const [envoi, setEnvoi] = useState(false)
+
+  useEffect(() => {
+    chargerAdresseMaison(idClient).then(({ adresse: a, erreur: e }) => {
+      if (e) setErreurGenerale(e)
+      else setAdresse(a)
+    })
+  }, [idClient])
+
+  async function envoyer(evenement) {
+    evenement.preventDefault()
+    setErreurGenerale(null)
+    const e = erreurAdresse(adresse)
+    setErreur(e)
+    if (e) return
+    setEnvoi(true)
+    const { erreur: echec } = await enregistrerAdresseMaison(idClient, adresse)
+    setEnvoi(false)
+    if (echec) return setErreurGenerale(echec)
+    setMessage('Adresse enregistrée.')
+  }
+
+  return (
+    <form onSubmit={envoyer} noValidate className="flex flex-col gap-5 rounded-card border border-line bg-white p-5 shadow-card md:p-6">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-xl">Mon adresse</h2>
+        <p className="text-muted">Proposée à chaque demande (« Maison »). Seul l'artisan que vous choisissez la voit.</p>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="adresse-maison" className="flex items-end justify-between gap-3 font-bold">
+          <span className="flex items-center gap-2">
+            <House className="h-5 w-5 text-brand" strokeWidth={2.5} aria-hidden="true" />
+            Adresse complète
+          </span>
+          <span className="text-sm font-normal tabular-nums text-muted">{adresse.trim().length} / {ADRESSE_MAX}</span>
+        </label>
+        <textarea
+          id="adresse-maison"
+          rows={2}
+          maxLength={ADRESSE_MAX}
+          placeholder="Exemple : 12 rue Ibnou Mounir, immeuble B, 3e étage, appt 7"
+          value={adresse}
+          aria-invalid={Boolean(erreur)}
+          onChange={(e) => { setAdresse(e.target.value); setErreur(null); setMessage('') }}
+          className="champ h-auto py-3"
+        />
+        {erreur && <p className="font-bold text-danger">{erreur}</p>}
+      </div>
+      <MessageErreur>{erreurGenerale}</MessageErreur>
+      <Confirmation>{message}</Confirmation>
+      <Bouton type="submit" disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</Bouton>
+    </form>
+  )
+}
+
 function MotDePasse() {
   const [form, setForm] = useState({ nouveau: '', confirmation: '' })
   const [erreurs, setErreurs] = useState({})
@@ -134,11 +197,15 @@ function MotDePasse() {
 
 // Paramètres du compte (maquette n°9), pour les clients et les artisans
 export default function Parametres() {
+  const { profil, mettreAJourProfil } = useSession()
   return (
     <section className="flex flex-col gap-6">
       <Titre sousTitre="Gérez les informations de votre compte.">Paramètres</Titre>
       <div className="grid items-start gap-5 md:grid-cols-2">
+        {/* US23 : facultative pour le client, obligatoire pour l'artisan (aussi dans « Mon profil ») */}
+        <ChoixPhoto profil={profil} surMiseAJour={mettreAJourProfil} obligatoire={profil.role === 'artisan'} />
         <InformationsCompte />
+        {profil.role === 'client' && <AdresseMaison idClient={profil.id} />}
         <MotDePasse />
       </div>
     </section>
