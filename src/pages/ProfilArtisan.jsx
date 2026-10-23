@@ -10,6 +10,7 @@ import { Avatar, ChoixPhoto } from '../components/PhotoProfil'
 
 const METIERS_MAX = 3
 const QUARTIER_MAX = 60
+const VOISINES_MAX = 5 // US27 : villes voisines où l'artisan accepte d'aller
 
 // Message d'erreur sous un champ : dit ce qui ne va pas et comment corriger.
 function Erreur({ children }) {
@@ -30,6 +31,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
   const [ville, setVille] = useState(profil.city || 'Casablanca')
   const [arrondissement, setArrondissement] = useState(profil.district ?? '')
   const [quartier, setQuartier] = useState(profil.neighborhood ?? '')
+  const [voisines, setVoisines] = useState(profil.nearby_cities ?? [])
   const [erreurs, setErreurs] = useState({})
   const [message, setMessage] = useState('')
   const [envoi, setEnvoi] = useState(false)
@@ -73,6 +75,15 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
     })
   }
 
+  function basculerVoisine(nom) {
+    setMessage('')
+    setVoisines((actuelles) => {
+      if (actuelles.includes(nom)) return actuelles.filter((v) => v !== nom)
+      if (actuelles.length >= VOISINES_MAX) return actuelles
+      return [...actuelles, nom]
+    })
+  }
+
   async function enregistrer(e) {
     e.preventDefault()
     setMessage('')
@@ -96,6 +107,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
       city: ville,
       district: arrondissement || null,
       neighborhood: quartier.trim() || null,
+      nearby_cities: voisines.filter((v) => v !== ville), // jamais sa propre ville
     }
     const { error } = await supabase.from('profiles').update(modifications).eq('id', profil.id)
     setEnvoi(false)
@@ -231,6 +243,7 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
                 onChange={(e) => {
                   setVille(e.target.value)
                   setArrondissement('') // la liste des arrondissements change avec la ville
+                  setVoisines((v) => v.filter((nom) => nom !== e.target.value)) // US27
                   setMessage('')
                 }}
                 className="champ appearance-none pr-11"
@@ -305,6 +318,49 @@ export default function ProfilArtisan({ profil, surMiseAJour }) {
             />
             <Erreur>{erreurs.quartier}</Erreur>
           </label>
+
+          {/* US27 : villes voisines, pour recevoir aussi leurs demandes */}
+          <div role="group" aria-labelledby="titre-voisines" className="flex flex-col gap-3">
+            <div className="flex items-end justify-between gap-3">
+              <span id="titre-voisines" className="font-bold">
+                J'accepte aussi d'aller à <span className="font-normal text-muted">(facultatif)</span>
+              </span>
+              <span
+                aria-live="polite"
+                className={`rounded-full px-3 py-1 font-bold tabular-nums ${
+                  voisines.length >= VOISINES_MAX ? 'bg-brand text-white' : 'bg-brand-light text-brand'
+                }`}
+              >
+                {voisines.length} / {VOISINES_MAX}
+              </span>
+            </div>
+            <p className="text-muted">
+              {voisines.length >= VOISINES_MAX
+                ? 'Maximum atteint : retirez une ville pour en choisir une autre.'
+                : `Vous verrez aussi les demandes de ces villes. ${VOISINES_MAX} villes au maximum.`}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {VILLES.filter((nom) => nom !== ville).map((nom) => {
+                const coche = voisines.includes(nom)
+                const bloque = !coche && voisines.length >= VOISINES_MAX
+                return (
+                  <button
+                    key={nom}
+                    type="button"
+                    aria-pressed={coche}
+                    disabled={bloque}
+                    onClick={() => basculerVoisine(nom)}
+                    className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 px-3.5 font-bold transition-all active:scale-[0.97] ${
+                      coche ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink hover:border-brand'
+                    } ${bloque ? 'opacity-40' : ''}`}
+                  >
+                    {coche && <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" />}
+                    {nom}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col gap-3">

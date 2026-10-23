@@ -50,6 +50,7 @@ create table public.profiles (
   available_today boolean not null default true,
   credit_balance  integer not null default 0,      -- DH, peut être négatif (simulation US15)
   avatar_path     text,                            -- photo dans Storage « avatars » (US23, migration 011)
+  nearby_cities   text[] not null default '{}',    -- villes voisines acceptées, 5 au plus (US27, migration 013)
   created_at      timestamptz not null default now(),
   -- RG03 : un artisan a au plus 3 métiers (0 tant que son profil n'est pas complété, US04) ;
   -- un client n'en a aucun
@@ -58,7 +59,8 @@ create table public.profiles (
     or (role = 'client'  and cardinality(trades) = 0)
   ),
   -- US23 : la photo est toujours rangée dans le dossier de son propriétaire
-  constraint profiles_avatar_dans_son_dossier check (avatar_path is null or avatar_path like id::text || '/%')
+  constraint profiles_avatar_dans_son_dossier check (avatar_path is null or avatar_path like id::text || '/%'),
+  constraint profiles_villes_voisines_max check (cardinality(nearby_cities) <= 5)
 );
 
 -- 1.3 contacts : téléphone, séparé du profil pour le protéger (RG02, RG08)
@@ -261,7 +263,7 @@ as $$
     where r.id = p_request_id
       and r.status = 'ouverte'
       and p.role = 'artisan'
-      and r.city = p.city
+      and (r.city = p.city or r.city = any (p.nearby_cities))     -- sa ville + ses villes voisines (US27)
       and (r.trade = any (p.trades) or t.for_artisans = false)    -- ses métiers + « Autre »
       and r.service_date between private.today_casablanca()
                              and private.today_casablanca() + 1
@@ -346,7 +348,7 @@ grant select on public.trades to authenticated;
 grant select on public.profiles to authenticated;
 grant insert (id, role, full_name, city, district, neighborhood, trades, available_today)
   on public.profiles to authenticated;
-grant update (full_name, city, district, neighborhood, trades, available_today, avatar_path)
+grant update (full_name, city, district, neighborhood, trades, available_today, avatar_path, nearby_cities)
   on public.profiles to authenticated;
 
 grant select, insert, update on public.contacts to authenticated;

@@ -107,7 +107,7 @@ export async function deconnecter() {
   await supabase.auth.signOut()
 }
 
-const COLONNES_PROFIL = 'id, role, full_name, city, district, neighborhood, trades, available_today, avatar_path'
+const COLONNES_PROFIL = 'id, role, full_name, city, district, neighborhood, trades, available_today, avatar_path, nearby_cities'
 const DEJA_EXISTANT = '23505' // code Postgres : la ligne existe déjà
 
 // Renvoie le profil de l'utilisateur connecté. S'il n'existe pas encore

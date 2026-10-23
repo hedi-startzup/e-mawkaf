@@ -193,9 +193,9 @@ export async function chargerFilArtisan(profil) {
   const [reponseDemandes, reponseMetiers] = await Promise.all([
     supabase
       .from('requests')
-      .select('id, trade, description, district, neighborhood, service_date, proposed_price, created_at')
+      .select('id, trade, description, city, district, neighborhood, service_date, proposed_price, created_at')
       .eq('status', 'ouverte')
-      .eq('city', profil.city)
+      .in('city', [profil.city, ...(profil.nearby_cities ?? [])]) // US27 : sa ville + ses villes voisines
       .in('service_date', profil.available_today ? [aujourdhuiCasablanca(), demainCasablanca()] : [demainCasablanca()])
       .order('created_at', { ascending: false }),
     supabase.from('trades').select('id, label, icon, for_artisans'),
